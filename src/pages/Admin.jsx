@@ -12,9 +12,9 @@ function F({ label, value, onChange, type = 'text', placeholder, rows }) {
     <div className="admin-field">
       <label htmlFor={id}>{label}</label>
       {rows ? (
-        <textarea id={id} value={value} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder} />
+        <textarea id={id} value={value} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder || ''} />
       ) : (
-        <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+        <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} />
       )}
     </div>
   );
@@ -59,7 +59,7 @@ function ListEditor({ items, columns, title, onAdd, onUpdate, onDelete }) {
         <div className="admin-edit-panel">
           <h4>{editing === 'new' ? '新增' : '编辑'}</h4>
           {displayCols.map(c => (
-            <F key={c.key} label={c.label} value={form[c.key] || ''} onChange={v => setForm(f => ({ ...f, [c.key]: v }))} rows={c.rows} type={c.type} placeholder={c.placeholder} />
+            <F key={c.key} label={c.label} value={form[c.key] || ''} onChange={v => setForm(f => ({ ...f, [c.key]: v }))} rows={c.rows} type={c.type} placeholder={c.placeholder || ''} />
           ))}
           <div className="admin-edit-actions">
             <button className="admin-btn primary" onClick={save}>保存</button>
@@ -180,7 +180,7 @@ function AdminDashboard() {
   };
 
   const TABS = [
-    { id: 'profile', label: '📋 个人资料' },
+    { id: 'profile', label: '📋 资料' },
     { id: 'stats', label: '📊 统计' },
     { id: 'nav', label: '🧭 导航' },
     { id: 'blog', label: '📝 博客' },
@@ -217,25 +217,30 @@ function AdminDashboard() {
 
         {/* 个人资料 */}
         {tab === 'profile' && (
-          <div className="admin-section">
-            <div className="admin-section-header"><h3>📋 个人资料</h3></div>
-            {!profile && <p style={{color:'var(--text-dim)',marginBottom:16}}>暂无数据，请先填写保存</p>}
-            <F label="名称" value={profile?.name || ''} onChange={v => setProfile(p => ({ ...p || {}, name: v }))} />
-            <F label="品牌" value={profile?.brand || ''} onChange={v => setProfile(p => ({ ...p || {}, brand: v }))} />
-            <F label="头像 URL" value={profile?.avatar || ''} onChange={v => setProfile(p => ({ ...p || {}, avatar: v }))} />
-            <F label="标题" value={profile?.title || ''} onChange={v => setProfile(p => ({ ...p || {}, title: v }))} />
-            <F label="副标题" value={profile?.tagline || ''} onChange={v => setProfile(p => ({ ...p || {}, tagline: v }))} />
-            <F label="简介" value={profile?.bio || ''} onChange={v => setProfile(p => ({ ...p || {}, bio: v }))} rows={3} />
-            <F label="邮箱" value={profile?.email || ''} onChange={v => setProfile(p => ({ ...p || {}, email: v }))} type="email" />
-            <F label="状态" value={profile?.status || 'available'} onChange={v => setProfile(p => ({ ...p || {}, status: v }))} placeholder="available / busy / offline" />
-            <button className="admin-btn primary" onClick={saveProfile} disabled={!profile}>保存</button>
+                  <div className="admin-section">
+                    <div className="admin-section-header"><h3>📋 资料</h3></div>
+                    {!profile && <p style={{color:'var(--text-dim)',marginBottom:16}}>暂无数据，请先填写保存</p>}
+                    <div className="admin-form-grid">
+                      <F label="名称" value={profile?.name || ''} onChange={v => setProfile(p => ({ ...p || {}, name: v }))} placeholder="例如：青云志主页" />
+                      <F label="品牌" value={profile?.brand || ''} onChange={v => setProfile(p => ({ ...p || {}, brand: v }))} placeholder="例如：QingHome" />
+                      <F label="头像 URL" value={profile?.avatar || ''} onChange={v => setProfile(p => ({ ...p || {}, avatar: v }))} placeholder="https://example.com/avatar.png" />
+                      <F label="标题" value={profile?.title || ''} onChange={v => setProfile(p => ({ ...p || {}, title: v }))} placeholder="例如：一个又菜又爱玩的小白" />
+                      <F label="副标题" value={profile?.tagline || ''} onChange={v => setProfile(p => ({ ...p || {}, tagline: v }))} placeholder="例如：用代码解决问题，用文字记录思考。" />
+                      <F label="邮箱" value={profile?.email || ''} onChange={v => setProfile(p => ({ ...p || {}, email: v }))} type="email" placeholder="admin@example.com" />
+                      <F label="简介" value={profile?.bio || ''} onChange={v => setProfile(p => ({ ...p || {}, bio: v }))} rows={3} placeholder="个人简介，支持多行文本" />
+                      <div className="admin-field">
+                        <label htmlFor="status">状态 <span style={{fontWeight:400,color:'var(--text-dim)'}}>（available / busy / offline）</span></label>
+                        <input id="status" type="text" value={profile?.status || 'available'} onChange={e => setProfile(p => ({ ...p || {}, status: e.target.value }))} placeholder="available" />
+                      </div>
+                    </div>
+                    <button className="admin-btn primary" onClick={saveProfile} style={{marginTop:16}} disabled={!profile}>保存</button>
           </div>
         )}
 
         {/* 统计 */}
         {tab === 'stats' && (
           <ListEditor items={stats} title="📊 统计胶囊"
-            columns={[{ key: 'label', label: '标签' }, { key: 'value', label: '数值' }, { key: 'icon', label: '图标 Class' }]}
+            columns={[{ key: 'label', label: '标签', placeholder: '例如：开源贡献' }, { key: 'value', label: '数值', placeholder: '例如：1.5k+' }, { key: 'icon', label: '图标 Class', placeholder: 'fa-solid fa-atom' }]}
             onAdd={async d => { await api.addStat(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateStat(id, d); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteStat(id); await refreshSection(); show('已删除'); }}
@@ -245,7 +250,7 @@ function AdminDashboard() {
         {/* 导航 */}
         {tab === 'nav' && (
           <ListEditor items={nav} title="🧭 导航菜单"
-            columns={[{ key: 'label', label: '标签' }, { key: 'icon', label: '图标 Class' }, { key: 'section_id', label: '区块 ID' }]}
+            columns={[{ key: 'label', label: '标签', placeholder: '首页' }, { key: 'icon', label: '图标 Class', placeholder: 'fa-solid fa-house' }, { key: 'section_id', label: '区块 ID', placeholder: 'home' }]}
             onAdd={async d => { await api.addNav(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateNav(id, d); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteNav(id); await refreshSection(); show('已删除'); }}
@@ -255,7 +260,7 @@ function AdminDashboard() {
         {/* 博客 */}
         {tab === 'blog' && (
           <ListEditor items={blog} title="📝 博客文章"
-            columns={[{ key: 'title', label: '标题' }, { key: 'excerpt', label: '摘要', rows: 2 }, { key: 'date', label: '日期', type: 'date' }, { key: 'tags', label: '标签' }, { key: 'url', label: '链接' }]}
+            columns={[{ key: 'title', label: '标题', placeholder: '文章标题' }, { key: 'excerpt', label: '摘要', rows: 2, placeholder: '文章摘要内容…' }, { key: 'date', label: '日期', type: 'date' }, { key: 'tags', label: '标签', placeholder: 'Cloudflare,Domain' }, { key: 'url', label: '链接', placeholder: 'https://…' }]}
             onAdd={async d => { await api.addBlog(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateBlog(id, d); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteBlog(id); await refreshSection(); show('已删除'); }}
@@ -265,7 +270,16 @@ function AdminDashboard() {
         {/* 项目 */}
         {tab === 'projects' && (
           <ListEditor items={projects} title="💻 开源项目"
-            columns={[{ key: 'name', label: '名称' }, { key: 'description', label: '描述', rows: 2 }, { key: 'tags', label: '标签' }, { key: 'stars', label: 'Stars', type: 'number' }, { key: 'language', label: '语言' }, { key: 'language_color', label: '语言色' }, { key: 'url', label: '链接' }, { key: 'icon', label: '图标 Class' }]}
+            columns={[
+              { key: 'name', label: '名称', placeholder: 'project-name' },
+              { key: 'description', label: '描述', rows: 2, placeholder: '项目描述…' },
+              { key: 'tags', label: '标签', placeholder: 'Cloudflare,Vite' },
+              { key: 'stars', label: 'Stars', type: 'number', placeholder: '99' },
+              { key: 'language', label: '语言', placeholder: 'JavaScript' },
+              { key: 'language_color', label: '语言色', placeholder: '#3178c6' },
+              { key: 'url', label: '链接', placeholder: 'https://github.com/…' },
+              { key: 'icon', label: '图标 Class', placeholder: 'fa-brands fa-github' },
+            ]}
             onAdd={async d => { await api.addProject({ ...d, stars: Number(d.stars) || 0 }); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateProject(id, { ...d, stars: Number(d.stars) || 0 }); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteProject(id); await refreshSection(); show('已删除'); }}
@@ -275,7 +289,13 @@ function AdminDashboard() {
         {/* 资源 */}
         {tab === 'resources' && (
           <ListEditor items={resources} title="🔗 资源分享"
-            columns={[{ key: 'title', label: '标题' }, { key: 'description', label: '描述', rows: 2 }, { key: 'category', label: '分类' }, { key: 'icon', label: '图标 Class' }, { key: 'url', label: '链接' }]}
+            columns={[
+              { key: 'title', label: '标题', placeholder: '站点名称' },
+              { key: 'description', label: '描述', rows: 2, placeholder: '站点描述…' },
+              { key: 'category', label: '分类', placeholder: 'nav / video / images / tools' },
+              { key: 'icon', label: '图标 Class', placeholder: 'fa-solid fa-compass' },
+              { key: 'url', label: '链接', placeholder: 'https://…' },
+            ]}
             onAdd={async d => { await api.addResource(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateResource(id, d); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteResource(id); await refreshSection(); show('已删除'); }}
@@ -285,7 +305,13 @@ function AdminDashboard() {
         {/* 社交 */}
         {tab === 'socials' && (
           <ListEditor items={socials} title="🌐 社交链接"
-            columns={[{ key: 'name', label: '名称' }, { key: 'handle', label: '账号' }, { key: 'url', label: '链接' }, { key: 'icon', label: '图标 Class' }, { key: 'color', label: '颜色', type: 'color' }]}
+            columns={[
+              { key: 'name', label: '名称', placeholder: 'GitHub' },
+              { key: 'handle', label: '账号', placeholder: '@username' },
+              { key: 'url', label: '链接', placeholder: 'https://github.com/…' },
+              { key: 'icon', label: '图标 Class', placeholder: 'fa-brands fa-github' },
+              { key: 'color', label: '颜色', type: 'color' },
+            ]}
             onAdd={async d => { await api.addSocial(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateSocial(id, d); await refreshSection(); show('已更新'); }}
             onDelete={async id => { await api.deleteSocial(id); await refreshSection(); show('已删除'); }}

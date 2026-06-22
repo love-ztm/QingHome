@@ -16,19 +16,15 @@ export default function Hero() {
           ) : (
             <div className="hero-avatar-fallback">{p.name?.[0] || 'Q'}</div>
           )}
+          {p.status === 'available' && <span className="hero-status-dot available" />}
+          {p.status === 'busy' && <span className="hero-status-dot busy" />}
+          {p.status === 'offline' && <span className="hero-status-dot offline" />}
         </div>
 
         <h1 className="hero-name">{p.name || 'QingHome'}</h1>
         <p className="hero-title">{p.title || ''}</p>
         <p className="hero-tagline">{p.tagline || ''}</p>
         <p className="hero-bio">{p.bio?.split('\n').map((l, i) => <span key={i}>{l}<br /></span>)}</p>
-
-        <div className="hero-status">
-          {p.status === 'available' && <span className="status-dot available" />}
-          {p.status === 'busy' && <span className="status-dot busy" />}
-          {p.status === 'offline' && <span className="status-dot offline" />}
-          <span>{p.status === 'available' ? '开放合作' : p.status === 'busy' ? '忙碌中' : '暂离'}</span>
-        </div>
 
         {statsList.length > 0 && (
           <div className="hero-stats">

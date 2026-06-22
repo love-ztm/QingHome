@@ -360,4 +360,17 @@
   .admin-main {
     padding: 20px 16px;
   }
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- 资料表单 2 列布局 ---------- */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+.admin-form-grid .admin-field:nth-last-child(2) {
+  grid-column: 1 / -1;
 }
