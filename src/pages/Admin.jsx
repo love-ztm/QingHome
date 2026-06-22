@@ -20,6 +20,11 @@ function F({ label, value, onChange, type = 'text', placeholder, rows, fullWidth
           <span className="admin-color-swatch" style={{ background: value || '#000000' }} />
           <input id={id} type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} style={{flex:1}} />
         </div>
+      ) : type === 'color-text' ? (
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <input type="color" value={value || '#000000'} onChange={e => onChange(e.target.value)} style={{width:40,height:36,padding:2,cursor:'pointer',flexShrink:0}} />
+          <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} style={{flex:1}} />
+        </div>
       ) : (
         <input id={id} type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || ''} />
       )}
@@ -28,7 +33,7 @@ function F({ label, value, onChange, type = 'text', placeholder, rows, fullWidth
 }
 
 /* ──── 列表编辑器 ──── */
-function ListEditor({ items, columns, title, onAdd, onUpdate, onDelete }) {
+function ListEditor({ items, columns, title, icon, onAdd, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({});
 
@@ -58,7 +63,7 @@ function ListEditor({ items, columns, title, onAdd, onUpdate, onDelete }) {
   return (
     <div className="admin-section">
       <div className="admin-section-header">
-        <h3>{title}</h3>
+        <h3>{icon && <i className={icon} style={{width:18,textAlign:'center',marginRight:6}} />}{title}</h3>
         <button className="admin-btn small" onClick={startAdd}>＋ 新增</button>
       </div>
 
@@ -189,14 +194,14 @@ function AdminDashboard() {
   };
 
   const TABS = [
-    { id: 'profile', label: '资料', icon: 'fa-solid fa-user' },
-    { id: 'stats', label: '统计', icon: 'fa-solid fa-chart-simple' },
-    { id: 'nav', label: '导航', icon: 'fa-solid fa-bars' },
-    { id: 'blog', label: '博客', icon: 'fa-solid fa-feather' },
-    { id: 'projects', label: '项目', icon: 'fa-solid fa-code' },
-    { id: 'resources', label: '资源', icon: 'fa-solid fa-link' },
-    { id: 'socials', label: '社交', icon: 'fa-solid fa-share-nodes' },
-    { id: 'password', label: '密码', icon: 'fa-solid fa-key' },
+    { id: 'profile', label: '个人资料', icon: 'fa-solid fa-user' },
+    { id: 'stats', label: '统计胶囊', icon: 'fa-solid fa-chart-simple' },
+    { id: 'nav', label: '站点导航', icon: 'fa-solid fa-bars' },
+    { id: 'blog', label: '博客文章', icon: 'fa-solid fa-feather' },
+    { id: 'projects', label: '项目仓库', icon: 'fa-solid fa-code' },
+    { id: 'resources', label: '公益站点', icon: 'fa-solid fa-link' },
+    { id: 'socials', label: '联系方式', icon: 'fa-solid fa-share-nodes' },
+    { id: 'password', label: '修改密码', icon: 'fa-solid fa-key' },
   ];
 
   const refreshSection = async () => { await loadAll(); refresh(); };
@@ -227,7 +232,7 @@ function AdminDashboard() {
         {/* 个人资料 */}
         {tab === 'profile' && (
                   <div className="admin-section">
-                    <div className="admin-section-header"><h3><i className="fa-solid fa-user" style={{marginRight:8}} /> 资料</h3></div>
+                    <div className="admin-section-header"><h3><i className="fa-solid fa-user" style={{marginRight:8}} /> 个人资料</h3></div>
                     {!profile && <p style={{color:'var(--text-dim)',marginBottom:16}}>暂无数据，请先填写保存</p>}
                     <div className="admin-form-grid">
                       <F label="名称" value={profile?.name || ''} onChange={v => setProfile(p => ({ ...p || {}, name: v }))} placeholder="例如：青云志主页" />
@@ -248,7 +253,7 @@ function AdminDashboard() {
 
         {/* 统计 */}
         {tab === 'stats' && (
-          <ListEditor items={stats} title="统计"
+          <ListEditor items={stats} title="统计胶囊" icon="fa-solid fa-chart-simple"
             columns={[
               { key: 'label', label: '标签', placeholder: '例如：开源贡献' },
               { key: 'value', label: '数值', placeholder: '例如：1.5k+' },
@@ -262,7 +267,7 @@ function AdminDashboard() {
 
         {/* 导航 */}
         {tab === 'nav' && (
-          <ListEditor items={nav} title="导航"
+          <ListEditor items={nav} title="站点导航" icon="fa-solid fa-bars"
             columns={[
               { key: 'label', label: '标签', placeholder: '首页' },
               { key: 'section_id', label: '区块 ID', placeholder: 'home' },
@@ -276,7 +281,7 @@ function AdminDashboard() {
 
         {/* 博客 */}
         {tab === 'blog' && (
-          <ListEditor items={blog} title="博客"
+          <ListEditor items={blog} title="博客文章" icon="fa-solid fa-feather"
             columns={[
               { key: 'title', label: '标题', placeholder: '文章标题' },
               { key: 'date', label: '日期', type: 'date' },
@@ -292,16 +297,16 @@ function AdminDashboard() {
 
         {/* 项目 */}
         {tab === 'projects' && (
-          <ListEditor items={projects} title="项目"
+          <ListEditor items={projects} title="项目仓库" icon="fa-solid fa-code"
             columns={[
               { key: 'name', label: '名称', placeholder: 'project-name' },
               { key: 'tags', label: '标签', placeholder: 'Cloudflare,Vite' },
               { key: 'icon', label: '图标 Class', placeholder: 'fa-brands fa-github' },
               { key: 'stars', label: 'Stars', type: 'number', placeholder: '99' },
               { key: 'language', label: '语言', placeholder: 'JavaScript' },
-              { key: 'language_color', label: '语言色', type: 'hex', placeholder: '#3178c6' },
+              { key: 'language_color', label: '语言色', type: 'color', placeholder: '#3178c6' },
               { key: 'url', label: '链接', placeholder: 'https://github.com/…' },
-              { key: 'description', label: '摘要', rows: 2, placeholder: '项目描述…', fullWidth: true },
+              { key: 'description', label: '摘要', rows: 2, placeholder: '项目描述…' },
             ]}
             onAdd={async d => { await api.addProject({ ...d, stars: Number(d.stars) || 0 }); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateProject(id, { ...d, stars: Number(d.stars) || 0 }); await refreshSection(); show('已更新'); }}
@@ -311,7 +316,7 @@ function AdminDashboard() {
 
         {/* 资源 */}
         {tab === 'resources' && (
-          <ListEditor items={resources} title="资源"
+          <ListEditor items={resources} title="公益站点" icon="fa-solid fa-link"
             columns={[
               { key: 'title', label: '标题', placeholder: '站点名称' },
               { key: 'category', label: '分类', placeholder: 'nav / video / images' },
@@ -327,13 +332,13 @@ function AdminDashboard() {
 
         {/* 社交 */}
         {tab === 'socials' && (
-          <ListEditor items={socials} title="社交"
+          <ListEditor items={socials} title="联系方式" icon="fa-solid fa-share-nodes"
             columns={[
               { key: 'name', label: '名称', placeholder: 'GitHub' },
               { key: 'handle', label: '账号', placeholder: '@username' },
               { key: 'url', label: '链接', placeholder: 'https://github.com/…' },
               { key: 'icon', label: '图标 Class', placeholder: 'fa-brands fa-github' },
-              { key: 'color', label: '颜色', type: 'color' },
+              { key: 'color', label: '颜色', type: 'color-text', placeholder: '#838383' },
             ]}
             onAdd={async d => { await api.addSocial(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateSocial(id, d); await refreshSection(); show('已更新'); }}
