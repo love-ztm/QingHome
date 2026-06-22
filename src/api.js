@@ -24,9 +24,15 @@ export function logout() {
   return request('/api/auth/logout', { method: 'POST' });
 }
 
-// 后台状态
+// 后台状态 + 首次注册
 export function getAdminStatus() {
   return request('/api/admin/status');
+}
+export function setup(username, password) {
+  return request('/api/admin/setup', { method: 'POST', body: JSON.stringify({ username, password }) });
+}
+export function changePassword(oldPassword, newPassword) {
+  return request('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
 }
 
 // 管理后台 API

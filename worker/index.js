@@ -2,9 +2,7 @@
  * QingHome2 Worker
  * 路由：/api/* → API 处理  / 其他 → 静态资源（SPA fallback）
  *
- * 环境变量（在 Cloudflare Dashboard 或通过 wrangler secret 设置）：
- *   ADMIN_USER  — 管理员用户名（必填）
- *   ADMIN_PASS  — 管理员密码（必填）
+ * 管理员创建方式：首次部署后，第一个访问 /admin/login 的用户注册成为管理员
  */
 
 // ──────────────────────────────────────────────
@@ -43,7 +41,7 @@ const DEFAULT_BLOG = [
 ];
 
 const DEFAULT_PROJECTS = [
-  { name: 'domain-check', description: '基于 Cloudflare Worker 和 Worker KV 构建的域名到期监控仪表盘，支持到期提醒。', tags: 'Cloudflare,Domain', stars: 245, language: 'JavaScript', language_color: '#083fa1', url: 'https://github.com/yutian81/domain-check', icon: 'fa-brands fa-github' },
+  { name: 'domain-check', description: '基于 Cloudflare Worker 和 KV 构建的域名到期监控仪表盘，支持到期提醒。', tags: 'Cloudflare,Domain', stars: 245, language: 'JavaScript', language_color: '#083fa1', url: 'https://github.com/yutian81/domain-check', icon: 'fa-brands fa-github' },
   { name: 'IP-SpeedTest', description: '测试 Cloudflare IP 地址的位置信息、延迟和下载速度。', tags: 'SpeedTest,Cloudflare', stars: 30, language: 'Golang', language_color: '#3178c6', url: 'https://github.com/yutian81/IP-SpeedTest', icon: 'fa-brands fa-github' },
   { name: 'Keepalive', description: '各种保活项目合集。', tags: 'Keepalive,Action', stars: 167, language: 'Python', language_color: '#f1e05a', url: 'https://github.com/yutian81/Keepalive', icon: 'fa-brands fa-github' },
   { name: 'QingHome', description: '一个精美的现代化个人主页。', tags: 'Cloudflare,Vite,React', stars: 99, language: 'TypeScript', language_color: '#3178c6', url: 'https://github.com/yutian81/QingHome', icon: 'fa-brands fa-github' },
@@ -103,10 +101,9 @@ async function getAuthUser(request, env) {
 }
 
 // ──────────────────────────────────────────────
-//  数据库初始化（建表 + 种子数据）
+//  建表（幂等）
 // ──────────────────────────────────────────────
-async function ensureDatabase(env) {
-  // 建表（幂等）
+async function ensureTables(env) {
   await env.DB.exec(`
     CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')));
     CREATE TABLE IF NOT EXISTS sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT NOT NULL UNIQUE, user_id INTEGER NOT NULL, expires_at TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')));
@@ -118,61 +115,48 @@ async function ensureDatabase(env) {
     CREATE TABLE IF NOT EXISTS socials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', handle TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT '', color TEXT DEFAULT '', sort_order INTEGER DEFAULT 0);
     CREATE TABLE IF NOT EXISTS nav_items (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', icon TEXT DEFAULT '', section_id TEXT DEFAULT '', sort_order INTEGER DEFAULT 0);
   `);
+}
 
-  // 每次请求都从环境变量同步到数据库
-  const adminUser = env.ADMIN_USER;
-  const adminPass = env.ADMIN_PASS;
-
-  if (!adminUser || !adminPass) {
-    return { adminConfigured: false };
-  }
-
-  // 创建或更新管理员（幂等：不存在则插入，存在则更新密码）
-  const hash = await hashPassword(adminPass);
-  const existing = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ?').bind(adminUser).first();
-  if (existing) {
-    await env.DB.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?').bind(hash, existing.id).run();
-  } else {
-    await env.DB.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').bind(adminUser, hash).run();
-  }
-
-  // 仅当没有种子数据时才写入默认数据
+// ──────────────────────────────────────────────
+//  写入默认种子数据（仅当 profile 表为空时）
+// ──────────────────────────────────────────────
+async function seedIfEmpty(env) {
   const profileCount = await env.DB.prepare('SELECT COUNT(*) as count FROM profile').first();
-  if (profileCount.count === 0) {
-    await env.DB.prepare('INSERT INTO profile (name,brand,avatar,title,tagline,bio,email,status) VALUES (?,?,?,?,?,?,?,?)')
-      .bind(DEFAULT_PROFILE.name, DEFAULT_PROFILE.brand, DEFAULT_PROFILE.avatar, DEFAULT_PROFILE.title, DEFAULT_PROFILE.tagline, DEFAULT_PROFILE.bio, DEFAULT_PROFILE.email, DEFAULT_PROFILE.status).run();
+  if (profileCount.count > 0) return;
 
-    for (let i = 0; i < DEFAULT_STATS.length; i++) {
-      await env.DB.prepare('INSERT INTO stats (label,value,icon,sort_order) VALUES (?,?,?,?)')
-        .bind(DEFAULT_STATS[i].label, DEFAULT_STATS[i].value, DEFAULT_STATS[i].icon, i).run();
-    }
-    for (let i = 0; i < DEFAULT_NAV.length; i++) {
-      await env.DB.prepare('INSERT INTO nav_items (label,icon,section_id,sort_order) VALUES (?,?,?,?)')
-        .bind(DEFAULT_NAV[i].label, DEFAULT_NAV[i].icon, DEFAULT_NAV[i].section_id, i).run();
-    }
-    for (let i = 0; i < DEFAULT_BLOG.length; i++) {
-      await env.DB.prepare('INSERT INTO blog_posts (title,excerpt,date,tags,url,sort_order) VALUES (?,?,?,?,?,?)')
-        .bind(DEFAULT_BLOG[i].title, DEFAULT_BLOG[i].excerpt, DEFAULT_BLOG[i].date, DEFAULT_BLOG[i].tags, DEFAULT_BLOG[i].url, i).run();
-    }
-    for (let i = 0; i < DEFAULT_PROJECTS.length; i++) {
-      const p = DEFAULT_PROJECTS[i];
-      await env.DB.prepare('INSERT INTO projects (name,description,tags,stars,language,language_color,url,icon,sort_order) VALUES (?,?,?,?,?,?,?,?,?)')
-        .bind(p.name, p.description, p.tags, p.stars, p.language, p.language_color, p.url, p.icon, i).run();
-    }
-    for (let i = 0; i < DEFAULT_RESOURCES.length; i++) {
-      const r = DEFAULT_RESOURCES[i];
-      await env.DB.prepare('INSERT INTO resources (title,description,category,icon,url,sort_order) VALUES (?,?,?,?,?,?)')
-        .bind(r.title, r.description, r.category, r.icon, r.url, i).run();
-    }
-    for (let i = 0; i < DEFAULT_SOCIALS.length; i++) {
-      const s = DEFAULT_SOCIALS[i];
-      await env.DB.prepare('INSERT INTO socials (name,handle,url,icon,color,sort_order) VALUES (?,?,?,?,?,?)')
-        .bind(s.name, s.handle, s.url, s.icon, s.color, i).run();
-    }
+  await env.DB.prepare('INSERT INTO profile (name,brand,avatar,title,tagline,bio,email,status) VALUES (?,?,?,?,?,?,?,?)')
+    .bind(DEFAULT_PROFILE.name, DEFAULT_PROFILE.brand, DEFAULT_PROFILE.avatar, DEFAULT_PROFILE.title, DEFAULT_PROFILE.tagline, DEFAULT_PROFILE.bio, DEFAULT_PROFILE.email, DEFAULT_PROFILE.status).run();
+
+  for (let i = 0; i < DEFAULT_STATS.length; i++) {
+    await env.DB.prepare('INSERT INTO stats (label,value,icon,sort_order) VALUES (?,?,?,?)').bind(DEFAULT_STATS[i].label, DEFAULT_STATS[i].value, DEFAULT_STATS[i].icon, i).run();
   }
+  for (let i = 0; i < DEFAULT_NAV.length; i++) {
+    await env.DB.prepare('INSERT INTO nav_items (label,icon,section_id,sort_order) VALUES (?,?,?,?)').bind(DEFAULT_NAV[i].label, DEFAULT_NAV[i].icon, DEFAULT_NAV[i].section_id, i).run();
+  }
+  for (let i = 0; i < DEFAULT_BLOG.length; i++) {
+    await env.DB.prepare('INSERT INTO blog_posts (title,excerpt,date,tags,url,sort_order) VALUES (?,?,?,?,?,?)').bind(DEFAULT_BLOG[i].title, DEFAULT_BLOG[i].excerpt, DEFAULT_BLOG[i].date, DEFAULT_BLOG[i].tags, DEFAULT_BLOG[i].url, i).run();
+  }
+  for (let i = 0; i < DEFAULT_PROJECTS.length; i++) {
+    const p = DEFAULT_PROJECTS[i];
+    await env.DB.prepare('INSERT INTO projects (name,description,tags,stars,language,language_color,url,icon,sort_order) VALUES (?,?,?,?,?,?,?,?,?)')
+      .bind(p.name, p.description, p.tags, p.stars, p.language, p.language_color, p.url, p.icon, i).run();
+  }
+  for (let i = 0; i < DEFAULT_RESOURCES.length; i++) {
+    const r = DEFAULT_RESOURCES[i];
+    await env.DB.prepare('INSERT INTO resources (title,description,category,icon,url,sort_order) VALUES (?,?,?,?,?,?)').bind(r.title, r.description, r.category, r.icon, r.url, i).run();
+  }
+  for (let i = 0; i < DEFAULT_SOCIALS.length; i++) {
+    const s = DEFAULT_SOCIALS[i];
+    await env.DB.prepare('INSERT INTO socials (name,handle,url,icon,color,sort_order) VALUES (?,?,?,?,?,?)').bind(s.name, s.handle, s.url, s.icon, s.color, i).run();
+  }
+}
 
-  console.log('QingHome2: 数据库就绪');
-  return { adminConfigured: true };
+// ──────────────────────────────────────────────
+//  检查是否有管理员存在
+// ──────────────────────────────────────────────
+async function hasAdmin(env) {
+  const row = await env.DB.prepare('SELECT COUNT(*) as count FROM admin_users').first();
+  return row.count > 0;
 }
 
 // ──────────────────────────────────────────────
@@ -195,8 +179,8 @@ async function handleRequest(request, env) {
     });
   }
 
-  // 确保数据库已初始化（惰性初始化，仅在首次 API 请求时执行）
-  const dbState = await ensureDatabase(env);
+  // 确保表已创建
+  await ensureTables(env);
 
   // ── 公开配置 ──
   if (pathname === '/api/public/config' && request.method === 'GET') {
@@ -207,29 +191,62 @@ async function handleRequest(request, env) {
   if (pathname === '/api/auth/login' && request.method === 'POST') return login(request, env);
   if (pathname === '/api/auth/logout' && request.method === 'POST') return logout(request, env);
 
-  // ── 调试接口：查看环境变量是否正常读取 ──
-  if (pathname === '/api/admin/debug' && request.method === 'GET') {
-    return json({
-      hasAdminUser: !!env.ADMIN_USER,
-      hasAdminPass: !!env.ADMIN_PASS,
-      adminUserValue: env.ADMIN_USER ? env.ADMIN_USER.substring(0, 3) + '***' : null,
-      adminPassValue: env.ADMIN_PASS ? '***' : null,
-      allKeys: Object.keys(env).filter(k => !['DB', 'ASSETS'].includes(k)),
-      dbState,
-    });
-  }
-
   // ── 管理后台状态 ──
   if (pathname === '/api/admin/status' && request.method === 'GET') {
-    return json({ setupNeeded: !dbState.adminConfigured });
+    const exists = await hasAdmin(env);
+    return json({ setupNeeded: !exists });
+  }
+
+  // ── 创建首位管理员（仅在无管理员时可调用） ──
+  if (pathname === '/api/admin/setup' && request.method === 'POST') {
+    const exists = await hasAdmin(env);
+    if (exists) return json({ error: '管理员已存在' }, 400);
+
+    const { username, password } = await request.json();
+    if (!username || !password) return json({ error: '用户名和密码不能为空' }, 400);
+    if (password.length < 6) return json({ error: '密码至少 6 位' }, 400);
+
+    const hash = await hashPassword(password);
+    await env.DB.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').bind(username, hash).run();
+
+    // 写入默认种子数据
+    await seedIfEmpty(env);
+
+    // 自动登录
+    const token = generateToken();
+    const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const user = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ?').bind(username).first();
+    await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').bind(token, user.id, expires).run();
+
+    return json({ token, username, expires, message: '管理员创建成功' });
+  }
+
+  // ── 修改密码（需要登录） ──
+  if (pathname === '/api/admin/change-password' && request.method === 'POST') {
+    const authUser = await getAuthUser(request, env);
+    if (!authUser) return json({ error: '未登录' }, 401);
+
+    const { oldPassword, newPassword } = await request.json();
+    if (!oldPassword || !newPassword) return json({ error: '旧密码和新密码不能为空' }, 400);
+    if (newPassword.length < 6) return json({ error: '新密码至少 6 位' }, 400);
+
+    // 验证旧密码
+    const user = await env.DB.prepare('SELECT id, password_hash FROM admin_users WHERE id = ?').bind(authUser.userId).first();
+    const oldHash = await hashPassword(oldPassword);
+    if (oldHash !== user.password_hash) return json({ error: '旧密码错误' }, 401);
+
+    const newHash = await hashPassword(newPassword);
+    await env.DB.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?').bind(newHash, user.id).run();
+
+    return json({ ok: true, message: '密码修改成功' });
   }
 
   // ── 管理后台 CRUD（需要认证） ──
   if (pathname.startsWith('/api/admin/')) {
-    const user = await getAuthUser(request, env);
-    if (!user) return json({ error: '未登录或登录已过期' }, 401);
+    const authUser = await getAuthUser(request, env);
+    if (!authUser) return json({ error: '未登录或登录已过期' }, 401);
     const section = pathname.replace('/api/admin/', '');
-    return handleAdminAPI(request, section, env, user);
+    return handleAdminAPI(request, section, env, authUser);
   }
 
   // 非 API 路径 → 让静态资产处理
@@ -248,22 +265,14 @@ async function getPublicConfig(env) {
     return rows.results || [];
   };
 
-  const profile = await getSection('profile', true);
-  const stats = await getSection('stats');
-  const navItems = await getSection('nav_items');
-  const blogPosts = await getSection('blog_posts');
-  const projects = await getSection('projects');
-  const resources = await getSection('resources');
-  const socials = await getSection('socials');
-
   return json({
-    profile: profile || DEFAULT_PROFILE,
-    stats: stats.length ? stats : DEFAULT_STATS,
-    navItems: navItems.length ? navItems : DEFAULT_NAV,
-    blogPosts: blogPosts.length ? blogPosts : DEFAULT_BLOG,
-    projects: projects.length ? projects : DEFAULT_PROJECTS,
-    resources: resources.length ? resources : DEFAULT_RESOURCES,
-    socials: socials.length ? socials : DEFAULT_SOCIALS,
+    profile: await getSection('profile', true) || DEFAULT_PROFILE,
+    stats: (await getSection('stats')) || DEFAULT_STATS,
+    navItems: (await getSection('nav_items')) || DEFAULT_NAV,
+    blogPosts: (await getSection('blog_posts')) || DEFAULT_BLOG,
+    projects: (await getSection('projects')) || DEFAULT_PROJECTS,
+    resources: (await getSection('resources')) || DEFAULT_RESOURCES,
+    socials: (await getSection('socials')) || DEFAULT_SOCIALS,
   });
 }
 
@@ -302,10 +311,8 @@ async function handleAdminAPI(request, path, env) {
   const method = request.method;
   const db = env.DB;
 
-  // GET 所有配置
   if (path === 'config' && method === 'GET') return getPublicConfig(env);
 
-  // ── Profile ──
   if (path === 'config/profile' && method === 'PUT') {
     const data = await request.json();
     const existing = await db.prepare('SELECT id FROM profile LIMIT 1').first();
@@ -319,7 +326,6 @@ async function handleAdminAPI(request, path, env) {
     return json({ ok: true });
   }
 
-  // ── Stats ──
   if (path === 'config/stats' && method === 'GET') { const r = await db.prepare('SELECT * FROM stats ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/stats' && method === 'POST') {
     const d = await request.json();
@@ -334,7 +340,6 @@ async function handleAdminAPI(request, path, env) {
     if (method === 'DELETE') { await db.prepare('DELETE FROM stats WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 
-  // ── Nav ──
   if (path === 'config/nav' && method === 'GET') { const r = await db.prepare('SELECT * FROM nav_items ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/nav' && method === 'POST') {
     const d = await request.json();
@@ -349,7 +354,6 @@ async function handleAdminAPI(request, path, env) {
     if (method === 'DELETE') { await db.prepare('DELETE FROM nav_items WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 
-  // ── Blog ──
   if (path === 'config/blog' && method === 'GET') { const r = await db.prepare('SELECT * FROM blog_posts ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/blog' && method === 'POST') {
     const d = await request.json();
@@ -364,7 +368,6 @@ async function handleAdminAPI(request, path, env) {
     if (method === 'DELETE') { await db.prepare('DELETE FROM blog_posts WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 
-  // ── Projects ──
   if (path === 'config/projects' && method === 'GET') { const r = await db.prepare('SELECT * FROM projects ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/projects' && method === 'POST') {
     const d = await request.json();
@@ -380,7 +383,6 @@ async function handleAdminAPI(request, path, env) {
     if (method === 'DELETE') { await db.prepare('DELETE FROM projects WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 
-  // ── Resources ──
   if (path === 'config/resources' && method === 'GET') { const r = await db.prepare('SELECT * FROM resources ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/resources' && method === 'POST') {
     const d = await request.json();
@@ -395,7 +397,6 @@ async function handleAdminAPI(request, path, env) {
     if (method === 'DELETE') { await db.prepare('DELETE FROM resources WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 
-  // ── Socials ──
   if (path === 'config/socials' && method === 'GET') { const r = await db.prepare('SELECT * FROM socials ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
   if (path === 'config/socials' && method === 'POST') {
     const d = await request.json();
