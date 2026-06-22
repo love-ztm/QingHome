@@ -12,6 +12,7 @@ export default function ListEditor({ items, columns, title, icon, onAdd, onUpdat
   const startEdit = (item) => {
     setEditing(Number(item.id));
     setForm(JSON.parse(JSON.stringify(item)));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const startAdd = () => {
     const o = {};
