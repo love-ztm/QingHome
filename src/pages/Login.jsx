@@ -51,7 +51,7 @@ export default function Login() {
       const result = await api.setup(regUser, regPass);
       localStorage.setItem('qinghome2_token', result.token);
       localStorage.setItem('qinghome2_username', result.username);
-      window.location.href = '/admin';
+      navigate('/admin', { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

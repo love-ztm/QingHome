@@ -1,13 +1,11 @@
 /**
  * QingHome2 Worker
- * 路由：/api/* → API 处理  / 其他 → 静态资源（SPA fallback）
- *
- * 管理员创建方式：首次部署后，第一个访问 /admin/login 的用户注册成为管理员
  */
 
-// ──────────────────────────────────────────────
-//  默认种子数据
-// ──────────────────────────────────────────────
+// ── 模块级初始化标志（仅首次请求建表）──
+let _initialized = false;
+
+// ── 默认种子数据 ──
 const DEFAULT_PROFILE = {
   name: '青云志主页', brand: 'QingHome',
   avatar: 'https://pan.811520.xyz/icon/logo128.webp',
@@ -68,58 +66,91 @@ const DEFAULT_SOCIALS = [
   { name: 'Email', handle: '@yutian81', url: 'mailto:admin@24811213.xyz', icon: 'fa-solid fa-envelope' },
 ];
 
-// ──────────────────────────────────────────────
-//  认证工具
-// ──────────────────────────────────────────────
+// ── 密码哈希（PBKDF2 + 随机盐）──
 async function hashPassword(password) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const derived = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hash = Array.from(new Uint8Array(derived)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return saltHex + ':' + hash;
 }
 
-function generateToken() {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+async function verifyPassword(password, stored) {
+  const [saltHex, hashHex] = stored.split(':');
+  const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+  const encoder = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveBits']);
+  const derived = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, keyMaterial, 256);
+  const hash = Array.from(new Uint8Array(derived)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return hash === hashHex;
 }
 
-async function getAuthUser(request, env) {
-  const auth = request.headers.get('Authorization');
-  if (!auth || !auth.startsWith('Bearer ')) return null;
-  const token = auth.slice(7);
-  const row = await env.DB.prepare(
-    'SELECT s.user_id, s.expires_at, u.username FROM sessions s JOIN admin_users u ON s.user_id = u.id WHERE s.token = ?'
-  ).bind(token).first();
-  if (!row) return null;
-  if (new Date(row.expires_at) < new Date()) {
-    await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
-    return null;
-  }
-  return { userId: row.user_id, username: row.username };
+// ── 通用 CRUD 工厂 ──
+function crudAPI(table, columns) {
+  const cols = columns.join(',');
+  const placeholders = columns.map(() => '?').join(',');
+  const setClause = columns.map(c => `${c}=?`).join(',');
+
+  return {
+    async getAll(db) {
+      const r = await db.prepare(`SELECT id,${cols} FROM ${table} ORDER BY sort_order ASC, id ASC`).all();
+      return r.results;
+    },
+    async add(db, data) {
+      const m = await db.prepare(`SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM ${table}`).first();
+      const vals = columns.map(c => data[c] ?? null);
+      await db.prepare(`INSERT INTO ${table} (${cols},sort_order) VALUES (${placeholders},?)`).bind(...vals, m.n).run();
+    },
+    async update(db, id, data) {
+      const vals = columns.map(c => data[c] ?? null);
+      await db.prepare(`UPDATE ${table} SET ${setClause} WHERE id=?`).bind(...vals, id).run();
+    },
+    async remove(db, id) {
+      await db.prepare(`DELETE FROM ${table} WHERE id=?`).bind(id).run();
+    },
+  };
 }
 
-// ──────────────────────────────────────────────
-//  建表（幂等）
-// ──────────────────────────────────────────────
+const SECTIONS = {
+  stats: crudAPI('stats', ['label', 'value', 'icon']),
+  nav: crudAPI('nav_items', ['label', 'icon', 'section_id']),
+  blog: crudAPI('blog_posts', ['title', 'excerpt', 'date', 'tags', 'url']),
+  projects: crudAPI('projects', ['name', 'description', 'tags', 'stars', 'language', 'language_color', 'url', 'icon']),
+  resources: crudAPI('resources', ['title', 'description', 'category', 'icon', 'url']),
+  socials: crudAPI('socials', ['name', 'handle', 'url', 'icon']),
+};
+
+// ── 建表（仅首次请求执行）──
+const TABLES_SQL = [
+  `CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')))`,
+  `CREATE TABLE IF NOT EXISTS sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT NOT NULL UNIQUE, user_id INTEGER NOT NULL, expires_at TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')))`,
+  `CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', brand TEXT DEFAULT '', avatar TEXT DEFAULT '', title TEXT DEFAULT '', tagline TEXT DEFAULT '', bio TEXT DEFAULT '', email TEXT DEFAULT '', status TEXT DEFAULT 'available')`,
+  `CREATE TABLE IF NOT EXISTS stats (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', value TEXT DEFAULT '', icon TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS blog_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', excerpt TEXT DEFAULT '', date TEXT DEFAULT '', tags TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', description TEXT DEFAULT '', tags TEXT DEFAULT '', stars INTEGER DEFAULT 0, language TEXT DEFAULT '', language_color TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT 'fa-brands fa-github', sort_order INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS resources (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', description TEXT DEFAULT '', category TEXT DEFAULT '', icon TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS socials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', handle TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS nav_items (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', icon TEXT DEFAULT '', section_id TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`,
+  `CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token)`,
+  `CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at)`,
+];
+
 async function ensureTables(env) {
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS admin_users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')))`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT NOT NULL UNIQUE, user_id INTEGER NOT NULL, expires_at TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')))`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS profile (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', brand TEXT DEFAULT '', avatar TEXT DEFAULT '', title TEXT DEFAULT '', tagline TEXT DEFAULT '', bio TEXT DEFAULT '', email TEXT DEFAULT '', status TEXT DEFAULT 'available')`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS stats (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', value TEXT DEFAULT '', icon TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS blog_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', excerpt TEXT DEFAULT '', date TEXT DEFAULT '', tags TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', description TEXT DEFAULT '', tags TEXT DEFAULT '', stars INTEGER DEFAULT 0, language TEXT DEFAULT '', language_color TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT 'fa-brands fa-github', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS resources (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', description TEXT DEFAULT '', category TEXT DEFAULT '', icon TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS socials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', handle TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS nav_items (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', icon TEXT DEFAULT '', section_id TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
+  if (_initialized) return;
+  for (const sql of TABLES_SQL) {
+    await env.DB.prepare(sql).run();
+  }
+  // 清理过期会话
+  await env.DB.prepare("DELETE FROM sessions WHERE expires_at < datetime('now')").run();
+  _initialized = true;
 }
 
-// ──────────────────────────────────────────────
-//  写入默认种子数据（仅当 profile 表为空时）
-// ──────────────────────────────────────────────
+// ── 种子数据 ──
 async function seedIfEmpty(env) {
-  const profileCount = await env.DB.prepare('SELECT COUNT(*) as count FROM profile').first();
-  if (profileCount.count > 0) return;
+  const { count } = await env.DB.prepare('SELECT COUNT(*) as count FROM profile').first();
+  if (count > 0) return;
 
   await env.DB.prepare('INSERT INTO profile (name,brand,avatar,title,tagline,bio,email,status) VALUES (?,?,?,?,?,?,?,?)')
     .bind(DEFAULT_PROFILE.name, DEFAULT_PROFILE.brand, DEFAULT_PROFILE.avatar, DEFAULT_PROFILE.title, DEFAULT_PROFILE.tagline, DEFAULT_PROFILE.bio, DEFAULT_PROFILE.email, DEFAULT_PROFILE.status).run();
@@ -148,160 +179,166 @@ async function seedIfEmpty(env) {
   }
 }
 
-// ──────────────────────────────────────────────
-//  检查是否有管理员存在
-// ──────────────────────────────────────────────
 async function hasAdmin(env) {
   const row = await env.DB.prepare('SELECT COUNT(*) as count FROM admin_users').first();
   return row.count > 0;
 }
 
-// ──────────────────────────────────────────────
-//  API 路由处理
-// ──────────────────────────────────────────────
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
+// ── 路由处理 ──
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const { pathname } = url;
 
   if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' },
-    });
+    return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS' } });
   }
 
-  // 确保表已创建，并尝试写入默认数据（数据为空时自动填充）
   await ensureTables(env);
   await seedIfEmpty(env);
 
   // ── 公开配置 ──
-  if (pathname === '/api/public/config' && request.method === 'GET') {
-    return getPublicConfig(env);
-  }
+  if (pathname === '/api/public/config' && request.method === 'GET') return getPublicConfig(env);
 
   // ── Auth ──
   if (pathname === '/api/auth/login' && request.method === 'POST') return login(request, env);
   if (pathname === '/api/auth/logout' && request.method === 'POST') return logout(request, env);
 
-  // ── 管理后台状态 ──
+  // ── 后台状态 ──
   if (pathname === '/api/admin/status' && request.method === 'GET') {
-    const exists = await hasAdmin(env);
-    return json({ setupNeeded: !exists });
+    return json({ setupNeeded: !(await hasAdmin(env)) });
   }
 
-  // ── 创建首位管理员（仅在无管理员时可调用） ──
+  // ── 创建首位管理员 ──
   if (pathname === '/api/admin/setup' && request.method === 'POST') {
     const exists = await hasAdmin(env);
     if (exists) return json({ error: '管理员已存在' }, 400);
-
     const { username, password } = await request.json();
     if (!username || !password) return json({ error: '用户名和密码不能为空' }, 400);
     if (password.length < 6) return json({ error: '密码至少 6 位' }, 400);
-
     const hash = await hashPassword(password);
-    await env.DB.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').bind(username, hash).run();
-
-    // 写入默认种子数据
+    try {
+      await env.DB.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').bind(username, hash).run();
+    } catch (e) {
+      if (e.message.includes('UNIQUE')) return json({ error: '用户名已存在' }, 409);
+      throw e;
+    }
     await seedIfEmpty(env);
-
-    // 自动登录
     const token = generateToken();
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     const user = await env.DB.prepare('SELECT id FROM admin_users WHERE username = ?').bind(username).first();
     await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').bind(token, user.id, expires).run();
-
-    return json({ token, username, expires, message: '管理员创建成功' });
+    return json({ token, username, expires });
   }
 
-  // ── 修改密码（需要登录） ──
+  // ── 修改密码 ──
   if (pathname === '/api/admin/change-password' && request.method === 'POST') {
     const authUser = await getAuthUser(request, env);
     if (!authUser) return json({ error: '未登录' }, 401);
-
     const { oldPassword, newPassword } = await request.json();
-    if (!oldPassword || !newPassword) return json({ error: '旧密码和新密码不能为空' }, 400);
+    if (!oldPassword || !newPassword) return json({ error: '密码不能为空' }, 400);
     if (newPassword.length < 6) return json({ error: '新密码至少 6 位' }, 400);
-
-    // 验证旧密码
-    const user = await env.DB.prepare('SELECT id, password_hash FROM admin_users WHERE id = ?').bind(authUser.userId).first();
-    const oldHash = await hashPassword(oldPassword);
-    if (oldHash !== user.password_hash) return json({ error: '旧密码错误' }, 401);
-
+    const user = await env.DB.prepare('SELECT password_hash FROM admin_users WHERE id = ?').bind(authUser.userId).first();
+    if (!(await verifyPassword(oldPassword, user.password_hash))) return json({ error: '旧密码错误' }, 401);
     const newHash = await hashPassword(newPassword);
     await env.DB.prepare('UPDATE admin_users SET password_hash = ? WHERE id = ?').bind(newHash, user.id).run();
-
-    return json({ ok: true, message: '密码修改成功' });
+    return json({ ok: true });
   }
 
-  // ── 管理后台 CRUD（需要认证） ──
+  // ── GitHub Stars 批量获取 ──
+  if (pathname === '/api/github-stars' && request.method === 'GET') {
+    const repos = url.searchParams.get('repos') || '';
+    const list = repos.split(',').filter(Boolean);
+    const results = {};
+    for (const repo of list.slice(0, 20)) {
+      try {
+        const res = await fetch(`https://api.github.com/repos/${repo}`);
+        if (res.ok) {
+          const data = await res.json();
+          results[repo] = data.stargazers_count;
+        }
+      } catch {}
+    }
+    return json(results);
+  }
+
+  // ── 管理后台 CRUD ──
   if (pathname.startsWith('/api/admin/')) {
     const authUser = await getAuthUser(request, env);
-    if (!authUser) return json({ error: '未登录或登录已过期' }, 401);
-    const section = pathname.replace('/api/admin/', '');
-    return handleAdminAPI(request, section, env, authUser);
+    if (!authUser) return json({ error: '未登录' }, 401);
+    const sectionPath = pathname.replace('/api/admin/', '');
+
+    // GET 所有配置
+    if (sectionPath === 'config' && request.method === 'GET') return getPublicConfig(env);
+
+    // Profile
+    if (sectionPath === 'config/profile' && request.method === 'PUT') {
+      const data = await parseJSON(request);
+      const { count } = await env.DB.prepare('SELECT COUNT(*) as count FROM profile').first();
+      if (count > 0) {
+        await env.DB.prepare('UPDATE profile SET name=?,brand=?,avatar=?,title=?,tagline=?,bio=?,email=?,status=? WHERE id=(SELECT id FROM profile LIMIT 1)')
+          .bind(data.name, data.brand, data.avatar, data.title, data.tagline, data.bio, data.email, data.status).run();
+      } else {
+        await env.DB.prepare('INSERT INTO profile (name,brand,avatar,title,tagline,bio,email,status) VALUES (?,?,?,?,?,?,?,?)')
+          .bind(data.name, data.brand, data.avatar, data.title, data.tagline, data.bio, data.email, data.status).run();
+      }
+      return json({ ok: true });
+    }
+
+    // 通用 CRUD 路由
+    const sectionMatch = sectionPath.match(/^config\/(stats|nav|blog|projects|resources|socials)(?:\/(\d+))?$/);
+    if (sectionMatch) {
+      const section = sectionMatch[1];
+      const id = sectionMatch[2] ? parseInt(sectionMatch[2]) : null;
+      const api = SECTIONS[section];
+      if (request.method === 'GET' && !id) { const items = await api.getAll(env.DB); return json(items); }
+      if (request.method === 'POST' && !id) { const d = await parseJSON(request); await api.add(env.DB, d); return json({ ok: true }); }
+      if (request.method === 'PUT' && id) { const d = await parseJSON(request); await api.update(env.DB, id, d); return json({ ok: true }); }
+      if (request.method === 'DELETE' && id) { await api.remove(env.DB, id); return json({ ok: true }); }
+    }
+
+    return json({ error: '未知路由' }, 404);
   }
 
-  // 非 API 路径 → 让静态资产处理
   return undefined;
 }
 
-// ──────────────────────────────────────────────
-//  公开配置
-// ──────────────────────────────────────────────
-async function getPublicConfig(env) {
-  const db = env.DB;
-
-  const getSingle = async (table) => {
-    const rows = await db.prepare(`SELECT * FROM ${table} LIMIT 1`).all();
-    return rows.results?.[0] || null;
-  };
-  const getList = async (table) => {
-    const rows = await db.prepare(`SELECT * FROM ${table} ORDER BY sort_order ASC, id ASC`).all();
-    return rows.results || [];
-  };
-
-  const profile = await getSingle('profile');
-  const stats = await getList('stats');
-  const navItems = await getList('nav_items');
-  const blogPosts = await getList('blog_posts');
-  const projects = await getList('projects');
-  const resources = await getList('resources');
-  const socials = await getList('socials');
-
-  return json({
-    profile: profile || DEFAULT_PROFILE,
-    stats: stats.length ? stats : DEFAULT_STATS,
-    navItems: navItems.length ? navItems : DEFAULT_NAV,
-    blogPosts: blogPosts.length ? blogPosts : DEFAULT_BLOG,
-    projects: projects.length ? projects : DEFAULT_PROJECTS,
-    resources: resources.length ? resources : DEFAULT_RESOURCES,
-    socials: socials.length ? socials : DEFAULT_SOCIALS,
-  });
+async function parseJSON(request) {
+  try { return await request.json(); } catch { return {}; }
 }
 
-// ──────────────────────────────────────────────
-//  Auth
-// ──────────────────────────────────────────────
-async function login(request, env) {
-  const { username, password } = await request.json();
-  if (!username || !password) return json({ error: '用户名和密码不能为空' }, 400);
+function generateToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
+async function getAuthUser(request, env) {
+  const auth = request.headers.get('Authorization');
+  if (!auth || !auth.startsWith('Bearer ')) return null;
+  const token = auth.slice(7);
+  const row = await env.DB.prepare(
+    'SELECT s.user_id, u.username FROM sessions s JOIN admin_users u ON s.user_id = u.id WHERE s.token = ? AND s.expires_at > datetime(\'now\')'
+  ).bind(token).first();
+  if (!row) return null;
+  return { userId: row.user_id, username: row.username };
+}
+
+async function login(request, env) {
+  const { username, password } = await parseJSON(request);
+  if (!username || !password) return json({ error: '用户名和密码不能为空' }, 400);
   const user = await env.DB.prepare('SELECT id, password_hash FROM admin_users WHERE username = ?').bind(username).first();
   if (!user) return json({ error: '用户名或密码错误' }, 401);
-
-  const hash = await hashPassword(password);
-  if (hash !== user.password_hash) return json({ error: '用户名或密码错误' }, 401);
-
+  if (!(await verifyPassword(password, user.password_hash))) return json({ error: '用户名或密码错误' }, 401);
   const token = generateToken();
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').bind(token, user.id, expires).run();
-
   return json({ token, username, expires });
 }
 
@@ -313,119 +350,26 @@ async function logout(request, env) {
   return json({ ok: true });
 }
 
-// ──────────────────────────────────────────────
-//  管理后台 CRUD
-// ──────────────────────────────────────────────
-async function handleAdminAPI(request, path, env) {
-  const method = request.method;
+async function getPublicConfig(env) {
   const db = env.DB;
-
-  if (path === 'config' && method === 'GET') return getPublicConfig(env);
-
-  if (path === 'config/profile' && method === 'PUT') {
-    const data = await request.json();
-    const existing = await db.prepare('SELECT id FROM profile LIMIT 1').first();
-    if (existing) {
-      await db.prepare('UPDATE profile SET name=?, brand=?, avatar=?, title=?, tagline=?, bio=?, email=?, status=? WHERE id=?')
-        .bind(data.name, data.brand, data.avatar, data.title, data.tagline, data.bio, data.email, data.status, existing.id).run();
-    } else {
-      await db.prepare('INSERT INTO profile (name,brand,avatar,title,tagline,bio,email,status) VALUES (?,?,?,?,?,?,?,?)')
-        .bind(data.name, data.brand, data.avatar, data.title, data.tagline, data.bio, data.email, data.status).run();
-    }
-    return json({ ok: true });
-  }
-
-  if (path === 'config/stats' && method === 'GET') { const r = await db.prepare('SELECT * FROM stats ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/stats' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM stats').first();
-    await db.prepare('INSERT INTO stats (label,value,icon,sort_order) VALUES (?,?,?,?)').bind(d.label, d.value, d.icon, m.n).run();
-    return json({ ok: true });
-  }
-  const statsMatch = path.match(/^config\/stats\/(\d+)$/);
-  if (statsMatch) {
-    const id = parseInt(statsMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE stats SET label=?,value=?,icon=?,sort_order=? WHERE id=?').bind(d.label, d.value, d.icon, d.sort_order ?? 0, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM stats WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  if (path === 'config/nav' && method === 'GET') { const r = await db.prepare('SELECT * FROM nav_items ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/nav' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM nav_items').first();
-    await db.prepare('INSERT INTO nav_items (label,icon,section_id,sort_order) VALUES (?,?,?,?)').bind(d.label, d.icon, d.section_id, m.n).run();
-    return json({ ok: true });
-  }
-  const navMatch = path.match(/^config\/nav\/(\d+)$/);
-  if (navMatch) {
-    const id = parseInt(navMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE nav_items SET label=?,icon=?,section_id=?,sort_order=? WHERE id=?').bind(d.label, d.icon, d.section_id, d.sort_order ?? 0, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM nav_items WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  if (path === 'config/blog' && method === 'GET') { const r = await db.prepare('SELECT * FROM blog_posts ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/blog' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM blog_posts').first();
-    await db.prepare('INSERT INTO blog_posts (title,excerpt,date,tags,url,sort_order) VALUES (?,?,?,?,?,?)').bind(d.title, d.excerpt, d.date, d.tags||'', d.url, m.n).run();
-    return json({ ok: true });
-  }
-  const blogMatch = path.match(/^config\/blog\/(\d+)$/);
-  if (blogMatch) {
-    const id = parseInt(blogMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE blog_posts SET title=?,excerpt=?,date=?,tags=?,url=? WHERE id=?').bind(d.title, d.excerpt, d.date, d.tags||'', d.url, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM blog_posts WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  if (path === 'config/projects' && method === 'GET') { const r = await db.prepare('SELECT * FROM projects ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/projects' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM projects').first();
-    await db.prepare('INSERT INTO projects (name,description,tags,stars,language,language_color,url,icon,sort_order) VALUES (?,?,?,?,?,?,?,?,?)')
-      .bind(d.name, d.description, d.tags, d.stars, d.language, d.language_color, d.url, d.icon, m.n).run();
-    return json({ ok: true });
-  }
-  const projMatch = path.match(/^config\/projects\/(\d+)$/);
-  if (projMatch) {
-    const id = parseInt(projMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE projects SET name=?,description=?,tags=?,stars=?,language=?,language_color=?,url=?,icon=? WHERE id=?').bind(d.name, d.description, d.tags, d.stars, d.language, d.language_color, d.url, d.icon, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM projects WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  if (path === 'config/resources' && method === 'GET') { const r = await db.prepare('SELECT * FROM resources ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/resources' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM resources').first();
-    await db.prepare('INSERT INTO resources (title,description,category,icon,url,sort_order) VALUES (?,?,?,?,?,?)').bind(d.title, d.description, d.category, d.icon, d.url, m.n).run();
-    return json({ ok: true });
-  }
-  const resMatch = path.match(/^config\/resources\/(\d+)$/);
-  if (resMatch) {
-    const id = parseInt(resMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE resources SET title=?,description=?,category=?,icon=?,url=? WHERE id=?').bind(d.title, d.description, d.category, d.icon, d.url, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM resources WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  if (path === 'config/socials' && method === 'GET') { const r = await db.prepare('SELECT * FROM socials ORDER BY sort_order ASC, id ASC').all(); return json(r.results); }
-  if (path === 'config/socials' && method === 'POST') {
-    const d = await request.json();
-    const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM socials').first();
-    await db.prepare('INSERT INTO socials (name,handle,url,icon,sort_order) VALUES (?,?,?,?,?)').bind(d.name, d.handle, d.url, d.icon, m.n).run();
-    return json({ ok: true });
-  }
-  const socialMatch = path.match(/^config\/socials\/(\d+)$/);
-  if (socialMatch) {
-    const id = parseInt(socialMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE socials SET name=?,handle=?,url=?,icon=? WHERE id=?').bind(d.name, d.handle, d.url, d.icon, id).run(); return json({ ok: true }); }
-    if (method === 'DELETE') { await db.prepare('DELETE FROM socials WHERE id=?').bind(id).run(); return json({ ok: true }); }
-  }
-
-  return json({ error: '未知路由' }, 404);
+  const profile = await db.prepare('SELECT name,brand,avatar,title,tagline,bio,email,status FROM profile LIMIT 1').first();
+  const stats = (await db.prepare('SELECT label,value,icon FROM stats ORDER BY sort_order ASC, id ASC').all()).results;
+  const navItems = (await db.prepare('SELECT label,icon,section_id FROM nav_items ORDER BY sort_order ASC, id ASC').all()).results;
+  const blogPosts = (await db.prepare('SELECT title,excerpt,date,tags,url FROM blog_posts ORDER BY sort_order ASC, id ASC').all()).results;
+  const projects = (await db.prepare('SELECT name,description,tags,stars,language,language_color,url,icon FROM projects ORDER BY sort_order ASC, id ASC').all()).results;
+  const resources = (await db.prepare('SELECT title,description,category,icon,url FROM resources ORDER BY sort_order ASC, id ASC').all()).results;
+  const socials = (await db.prepare('SELECT name,handle,url,icon FROM socials ORDER BY sort_order ASC, id ASC').all()).results;
+  return json({
+    profile: profile || DEFAULT_PROFILE,
+    stats: stats.length ? stats : DEFAULT_STATS,
+    navItems: navItems.length ? navItems : DEFAULT_NAV,
+    blogPosts: blogPosts.length ? blogPosts : DEFAULT_BLOG,
+    projects: projects.length ? projects : DEFAULT_PROJECTS,
+    resources: resources.length ? resources : DEFAULT_RESOURCES,
+    socials: socials.length ? socials : DEFAULT_SOCIALS,
+  });
 }
 
-// ──────────────────────────────────────────────
-//  导出
-// ──────────────────────────────────────────────
 export default {
   async fetch(request, env) {
     try {
@@ -433,8 +377,8 @@ export default {
       if (response) return response;
       return env.ASSETS && env.ASSETS.fetch(request);
     } catch (err) {
-      console.error('QingHome2 Worker Error:', err);
-      return json({ error: err.message }, 500);
+      console.error('QingHome2 Error:', err.message);
+      return json({ error: '服务器内部错误' }, 500);
     }
   },
 };

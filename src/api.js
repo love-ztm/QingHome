@@ -1,98 +1,45 @@
-const API_BASE = '';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 async function request(path, options = {}) {
   const token = localStorage.getItem('qinghome2_token');
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '请求失败');
+  const data = res.status === 204 ? null : await res.json();
+  if (!res.ok) throw new Error(data?.error || '请求失败');
   return data;
 }
 
-// 公开配置
-export function getPublicConfig() {
-  return request('/api/public/config');
+// 工厂函数：生成 add/update/delete 三个函数
+function crud(path) {
+  return {
+    add: (data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
+    update: (id, data) => request(`${path}/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    delete: (id) => request(`${path}/${id}`, { method: 'DELETE' }),
+  };
 }
 
-// Auth
-export function login(username, password) {
-  return request('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
-}
-export function logout() {
-  return request('/api/auth/logout', { method: 'POST' });
-}
+export const getPublicConfig = () => request('/api/public/config');
 
-// 后台状态 + 首次注册
-export function getAdminStatus() {
-  return request('/api/admin/status');
-}
-export function setup(username, password) {
-  return request('/api/admin/setup', { method: 'POST', body: JSON.stringify({ username, password }) });
-}
-export function changePassword(oldPassword, newPassword) {
-  return request('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
-}
+export const login = (username, password) =>
+  request('/api/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+export const logout = () => request('/api/auth/logout', { method: 'POST' });
 
-// 管理后台 API（批量获取+单条增删改）
-export function getAdminConfig() {
-  return request('/api/admin/config');
-}
-export function updateProfile(data) {
-  return request('/api/admin/config/profile', { method: 'PUT', body: JSON.stringify(data) });
-}
-export function addStat(data) {
-  return request('/api/admin/config/stats', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateStat(id, data) {
-  return request(`/api/admin/config/stats/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteStat(id) {
-  return request(`/api/admin/config/stats/${id}`, { method: 'DELETE' });
-}
-export function addNav(data) {
-  return request('/api/admin/config/nav', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateNav(id, data) {
-  return request(`/api/admin/config/nav/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteNav(id) {
-  return request(`/api/admin/config/nav/${id}`, { method: 'DELETE' });
-}
-export function addBlog(data) {
-  return request('/api/admin/config/blog', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateBlog(id, data) {
-  return request(`/api/admin/config/blog/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteBlog(id) {
-  return request(`/api/admin/config/blog/${id}`, { method: 'DELETE' });
-}
-export function addProject(data) {
-  return request('/api/admin/config/projects', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateProject(id, data) {
-  return request(`/api/admin/config/projects/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteProject(id) {
-  return request(`/api/admin/config/projects/${id}`, { method: 'DELETE' });
-}
-export function addResource(data) {
-  return request('/api/admin/config/resources', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateResource(id, data) {
-  return request(`/api/admin/config/resources/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteResource(id) {
-  return request(`/api/admin/config/resources/${id}`, { method: 'DELETE' });
-}
-export function addSocial(data) {
-  return request('/api/admin/config/socials', { method: 'POST', body: JSON.stringify(data) });
-}
-export function updateSocial(id, data) {
-  return request(`/api/admin/config/socials/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-}
-export function deleteSocial(id) {
-  return request(`/api/admin/config/socials/${id}`, { method: 'DELETE' });
-}
+export const getAdminStatus = () => request('/api/admin/status');
+export const setup = (username, password) =>
+  request('/api/admin/setup', { method: 'POST', body: JSON.stringify({ username, password }) });
+export const changePassword = (oldPassword, newPassword) =>
+  request('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
+
+export const getAdminConfig = () => request('/api/admin/config');
+export const updateProfile = (data) =>
+  request('/api/admin/config/profile', { method: 'PUT', body: JSON.stringify(data) });
+
+export const statsApi = crud('/api/admin/config/stats');
+export const navApi = crud('/api/admin/config/nav');
+export const blogApi = crud('/api/admin/config/blog');
+export const projectsApi = crud('/api/admin/config/projects');
+export const resourcesApi = crud('/api/admin/config/resources');
+export const socialsApi = crud('/api/admin/config/socials');
+
+export const fetchGitHubStars = (repos) => request(`/api/github-stars?repos=${repos.join(',')}`);
