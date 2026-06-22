@@ -2,7 +2,7 @@ name = "qinghome2"
 main = "worker/index.js"
 compatibility_date = "2024-12-01"
 
-# D1 数据库 — Wrangler 自动解析名称，无需手动指定 ID
+# D1 数据库（Wrangler v4 自动解析名称）
 [[d1_databases]]
 binding = "DB"
 database_name = "qinghome2"
