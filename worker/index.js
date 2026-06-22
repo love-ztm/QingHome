@@ -62,10 +62,10 @@ const DEFAULT_RESOURCES = [
 ];
 
 const DEFAULT_SOCIALS = [
-  { name: 'GitHub', handle: '@yutian81', url: 'https://github.com/yutian81', icon: 'fa-brands fa-github', color: '#838383' },
-  { name: 'Telegram', handle: '@yutian88881', url: 'https://t.me/yutian88881', icon: 'fa-brands fa-telegram', color: '#1d9bf0' },
-  { name: 'Bilibili', handle: '@雨天-狂奔', url: 'https://space.bilibili.com/677845115', icon: 'fa-brands fa-bilibili', color: '#1e80ff' },
-  { name: 'Email', handle: '@yutian81', url: 'mailto:admin@24811213.xyz', icon: 'fa-solid fa-envelope', color: '#ea4335' },
+  { name: 'GitHub', handle: '@yutian81', url: 'https://github.com/yutian81', icon: 'fa-brands fa-github' },
+  { name: 'Telegram', handle: '@yutian88881', url: 'https://t.me/yutian88881', icon: 'fa-brands fa-telegram' },
+  { name: 'Bilibili', handle: '@雨天-狂奔', url: 'https://space.bilibili.com/677845115', icon: 'fa-brands fa-bilibili' },
+  { name: 'Email', handle: '@yutian81', url: 'mailto:admin@24811213.xyz', icon: 'fa-solid fa-envelope' },
 ];
 
 // ──────────────────────────────────────────────
@@ -110,7 +110,7 @@ async function ensureTables(env) {
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS blog_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', excerpt TEXT DEFAULT '', date TEXT DEFAULT '', tags TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', description TEXT DEFAULT '', tags TEXT DEFAULT '', stars INTEGER DEFAULT 0, language TEXT DEFAULT '', language_color TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT 'fa-brands fa-github', sort_order INTEGER DEFAULT 0)`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS resources (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT DEFAULT '', description TEXT DEFAULT '', category TEXT DEFAULT '', icon TEXT DEFAULT '', url TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
-  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS socials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', handle TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT '', color TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS socials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT DEFAULT '', handle TEXT DEFAULT '', url TEXT DEFAULT '', icon TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
   await env.DB.prepare(`CREATE TABLE IF NOT EXISTS nav_items (id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT DEFAULT '', icon TEXT DEFAULT '', section_id TEXT DEFAULT '', sort_order INTEGER DEFAULT 0)`).run();
 }
 
@@ -144,7 +144,7 @@ async function seedIfEmpty(env) {
   }
   for (let i = 0; i < DEFAULT_SOCIALS.length; i++) {
     const s = DEFAULT_SOCIALS[i];
-    await env.DB.prepare('INSERT INTO socials (name,handle,url,icon,color,sort_order) VALUES (?,?,?,?,?,?)').bind(s.name, s.handle, s.url, s.icon, s.color, i).run();
+    await env.DB.prepare('INSERT INTO socials (name,handle,url,icon,sort_order) VALUES (?,?,?,?,?)').bind(s.name, s.handle, s.url, s.icon, i).run();
   }
 }
 
@@ -410,13 +410,13 @@ async function handleAdminAPI(request, path, env) {
   if (path === 'config/socials' && method === 'POST') {
     const d = await request.json();
     const m = await db.prepare('SELECT COALESCE(MAX(sort_order), -1) + 1 as n FROM socials').first();
-    await db.prepare('INSERT INTO socials (name,handle,url,icon,color,sort_order) VALUES (?,?,?,?,?,?)').bind(d.name, d.handle, d.url, d.icon, d.color, m.n).run();
+    await db.prepare('INSERT INTO socials (name,handle,url,icon,sort_order) VALUES (?,?,?,?,?)').bind(d.name, d.handle, d.url, d.icon, m.n).run();
     return json({ ok: true });
   }
   const socialMatch = path.match(/^config\/socials\/(\d+)$/);
   if (socialMatch) {
     const id = parseInt(socialMatch[1]);
-    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE socials SET name=?,handle=?,url=?,icon=?,color=? WHERE id=?').bind(d.name, d.handle, d.url, d.icon, d.color, id).run(); return json({ ok: true }); }
+    if (method === 'PUT') { const d = await request.json(); await db.prepare('UPDATE socials SET name=?,handle=?,url=?,icon=? WHERE id=?').bind(d.name, d.handle, d.url, d.icon, id).run(); return json({ ok: true }); }
     if (method === 'DELETE') { await db.prepare('DELETE FROM socials WHERE id=?').bind(id).run(); return json({ ok: true }); }
   }
 

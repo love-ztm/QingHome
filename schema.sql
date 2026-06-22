@@ -76,7 +76,6 @@ CREATE TABLE IF NOT EXISTS socials (
   handle TEXT DEFAULT '',
   url TEXT DEFAULT '',
   icon TEXT DEFAULT '',
-  color TEXT DEFAULT '',
   sort_order INTEGER DEFAULT 0
 );
 

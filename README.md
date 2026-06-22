@@ -69,18 +69,7 @@ npm run dev
 
 你需要一个 [Cloudflare 账户](https://dash.cloudflare.com/)，且已安装 Node.js。
 
-#### 需要配置的环境变量
-
-部署时需在 Cloudflare Dashboard 中设置以下两个 **环境变量（Secrets）**：
-
-| 变量名 | 说明 | 设置方式 |
-|--------|------|----------|
-| `ADMIN_USER` | 管理员登录用户名 | `npx wrangler secret put ADMIN_USER` 或 Dashboard → Settings → Variables |
-| `ADMIN_PASS` | 管理员登录密码 | `npx wrangler secret put ADMIN_PASS` 或 Dashboard → Settings → Variables |
-
-> ⚠️ **重要**：必须同时设置这两个变量，Worker 才能在首次部署时自动创建管理员账号并填充种子数据。**登录时只能使用这里设置的用户名和密码**，这是唯一的登录凭据。
->
-> 如果未设置这两个变量，登录页会显示提示信息，无法进入后台。
+> ⚠️ 无需手动设置任何环境变量，首次访问 `/admin/login` 时会自动引导创建管理员账号。
 
 ---
 
@@ -96,7 +85,7 @@ npx wrangler login
 npx wrangler d1 create qinghome2
 ```
 
-创建成功后，输出中会包含 `database_id`，将其填入 `wrangler.toml`：
+创建成功后，将输出中的 `database_id` 填入 `wrangler.toml`：
 
 ```toml
 [[d1_databases]]
@@ -105,46 +94,26 @@ database_name = "qinghome2"
 database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ← 替换为实际 ID
 ```
 
-> 💡 新版本 Wrangler 支持自动解析数据库名称（不填 `database_id`），但首次创建时仍需手动 `d1 create` 一次。
-
-### Step 3 — 设置管理员环境变量
-
-```bash
-npx wrangler secret put ADMIN_USER
-# 输入你的管理员用户名
-
-npx wrangler secret put ADMIN_PASS
-# 输入你的管理员密码（至少 6 位）
-```
-
-> 也可以在 Cloudflare Dashboard → 对应 Worker → **Settings** → **Variables** 中添加这两个变量。
-
-### Step 4 — 构建 + 部署
+### Step 3 — 构建 + 部署
 
 ```bash
 npm run deploy
 ```
 
-首次部署时，Worker 会自动：
-
-1. ✅ 创建所有数据库表（幂等操作，重复执行无害）
-2. ✅ 检测到 `ADMIN_USER` / `ADMIN_PASS` 环境变量已存在
-3. ✅ 创建管理员账号
-4. ✅ 写入默认种子数据（个人资料、博客、项目、资源、社交链接等）
-
-部署成功后，终端会输出访问地址：
+首次部署成功后，终端会输出访问地址：
 
 ```
 ✨ Successfully published your script to
 https://qinghome2.<你的子域>.workers.dev
 ```
 
-### Step 5 — 登录管理后台
+### Step 4 — 创建管理员
 
 1. 浏览器打开 `https://qinghome2.<你的子域>.workers.dev/admin/login`
-2. 输入你在 Step 3 中设置的 **用户名** 和 **密码**
-3. 登录成功后自动跳转至管理仪表盘
-4. 所有配置均可在线编辑，修改后首页实时生效
+2. 首次访问会自动显示 **「创建管理员」** 注册表单
+3. 输入用户名和密码，点击「创建管理员并登录」
+4. 创建成功后**自动登录**，进入管理仪表盘
+5. 所有配置均可在线编辑，修改后首页实时生效
 
 ---
 
@@ -220,12 +189,10 @@ https://qinghome2.<你的子域>.workers.dev
 
 - [ ] `npx wrangler d1 create qinghome2` 已执行
 - [ ] `wrangler.toml` 中的 `database_id` 已填入正确的 UUID
-- [ ] `npx wrangler secret put ADMIN_USER` 已设置（或 Dashboard 中添加）
-- [ ] `npx wrangler secret put ADMIN_PASS` 已设置
 - [ ] `npm run deploy` 部署成功
-- [ ] 访问首页 `/` 显示正常
-- [ ] 访问 `/admin/login` 可正常进入登录页
-- [ ] 使用设置的 ADMIN_USER / ADMIN_PASS 登录成功
+- [ ] 访问首页 `/` 显示正常（默认种子数据）
+- [ ] 访问 `/admin/login` 显示创建管理员表单
+- [ ] 创建管理员后自动登录正常
 - [ ] 主题切换正常（亮/暗模式 + localStorage 持久化）
 - [ ] Font Awesome 图标正常加载（需联网）
 - [ ] 移动端布局正常（汉堡菜单、单列卡片）

@@ -32,7 +32,7 @@ export default function Hero() {
         <p className="hero__title">{p.title || ''}</p>
         <p className="hero__tagline">{p.tagline || ''}</p>
         <p className="hero__bio">
-          {(p.bio || '').split('<br>').map((line, i) => (
+          {(p.bio || '').replace(/\\n|<br\s*\/?>/gi, '<br>').split('<br>').map((line, i) => (
             <span key={i}>{i > 0 && <br />}{line}</span>
           ))}
         </p>

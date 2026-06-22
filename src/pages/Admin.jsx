@@ -339,7 +339,6 @@ function AdminDashboard() {
               { key: 'handle', label: '账号', placeholder: '@username' },
               { key: 'url', label: '链接', placeholder: 'https://github.com/…' },
               { key: 'icon', label: '图标 Class', placeholder: 'fa-brands fa-github' },
-              { key: 'color', label: '颜色', type: 'color-text', placeholder: '#838383' },
             ]}
             onAdd={async d => { await api.addSocial(d); await refreshSection(); show('已添加'); }}
             onUpdate={async (id, d) => { await api.updateSocial(id, d); await refreshSection(); show('已更新'); }}

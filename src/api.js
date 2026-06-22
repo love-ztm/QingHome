@@ -35,15 +35,12 @@ export function changePassword(oldPassword, newPassword) {
   return request('/api/admin/change-password', { method: 'POST', body: JSON.stringify({ oldPassword, newPassword }) });
 }
 
-// 管理后台 API
+// 管理后台 API（批量获取+单条增删改）
 export function getAdminConfig() {
   return request('/api/admin/config');
 }
 export function updateProfile(data) {
   return request('/api/admin/config/profile', { method: 'PUT', body: JSON.stringify(data) });
-}
-export function getStats() {
-  return request('/api/admin/config/stats');
 }
 export function addStat(data) {
   return request('/api/admin/config/stats', { method: 'POST', body: JSON.stringify(data) });
@@ -54,9 +51,6 @@ export function updateStat(id, data) {
 export function deleteStat(id) {
   return request(`/api/admin/config/stats/${id}`, { method: 'DELETE' });
 }
-export function getNav() {
-  return request('/api/admin/config/nav');
-}
 export function addNav(data) {
   return request('/api/admin/config/nav', { method: 'POST', body: JSON.stringify(data) });
 }
@@ -65,9 +59,6 @@ export function updateNav(id, data) {
 }
 export function deleteNav(id) {
   return request(`/api/admin/config/nav/${id}`, { method: 'DELETE' });
-}
-export function getBlog() {
-  return request('/api/admin/config/blog');
 }
 export function addBlog(data) {
   return request('/api/admin/config/blog', { method: 'POST', body: JSON.stringify(data) });
@@ -78,9 +69,6 @@ export function updateBlog(id, data) {
 export function deleteBlog(id) {
   return request(`/api/admin/config/blog/${id}`, { method: 'DELETE' });
 }
-export function getProjects() {
-  return request('/api/admin/config/projects');
-}
 export function addProject(data) {
   return request('/api/admin/config/projects', { method: 'POST', body: JSON.stringify(data) });
 }
@@ -90,9 +78,6 @@ export function updateProject(id, data) {
 export function deleteProject(id) {
   return request(`/api/admin/config/projects/${id}`, { method: 'DELETE' });
 }
-export function getResources() {
-  return request('/api/admin/config/resources');
-}
 export function addResource(data) {
   return request('/api/admin/config/resources', { method: 'POST', body: JSON.stringify(data) });
 }
@@ -101,9 +86,6 @@ export function updateResource(id, data) {
 }
 export function deleteResource(id) {
   return request(`/api/admin/config/resources/${id}`, { method: 'DELETE' });
-}
-export function getSocials() {
-  return request('/api/admin/config/socials');
 }
 export function addSocial(data) {
   return request('/api/admin/config/socials', { method: 'POST', body: JSON.stringify(data) });
