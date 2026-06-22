@@ -7,8 +7,6 @@ export default function F({ label, value, onChange, type = 'text', placeholder, 
       <label htmlFor={id}>{label}</label>
       {rows ? (
         <textarea id={id} value={value} onChange={e => onChange(e.target.value)} rows={rows} placeholder={placeholder || ''} />
-      ) : type === 'color' ? (
-        <input id={id} type="color" value={value || '#000000'} onChange={e => onChange(e.target.value)} className="admin-color-input" />
       ) : type === 'color-text' ? (
         <div className="admin-color-ct">
           <input type="color" value={value || '#000000'} onChange={e => onChange(e.target.value)} className="admin-color-input" />
