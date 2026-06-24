@@ -153,151 +153,103 @@ img { max-width: 100%; display: block; }
   animation: heroEnter 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* ======================
-   水墨背景层
-====================== */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: radial-gradient(circle at top, #151b25, #0b0f14);
+  overflow: hidden;
+}
+
+/* 背景层 */
 .hero-bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.08), transparent 40%),
-    radial-gradient(circle at 80% 60%, rgba(255,255,255,0.06), transparent 45%),
-    linear-gradient(180deg, #0b0f14, #0f141b);
-
-  filter: blur(0px);
-  transform: scale(1.1);
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(255,255,255,0.04), transparent 50%);
+  opacity: 0.8;
 }
 
-/* 可选：如果你有水墨图 */
-.hero-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: url("/ink-bg.jpg") center/cover no-repeat;
-  opacity: 0.25;
-  mix-blend-mode: screen;
+/* 核心布局（关键优化） */
+.hero-wrap {
+  width: min(1100px, 92%);
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 60px;
+  align-items: center;
 }
 
-/* ======================
-   内容层
-====================== */
-.hero-content {
-  position: relative;
-  text-align: center;
-  z-index: 2;
-
-  animation: contentFloat 4s ease-in-out infinite;
+/* 左侧文字 */
+.hero-text {
+  color: white;
 }
 
-/* ======================
-   标题（国风核心）
-====================== */
-.hero-title {
-  font-size: 48px;
-  font-weight: 400;
-  letter-spacing: 0.12em;
-
-  color: rgba(255,255,255,0.92);
-
-  font-family: "ZCOOL XiaoWei", serif;
-
-  text-shadow: 0 10px 30px rgba(0,0,0,0.4);
-
-  animation: titleReveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/* ======================
-   副标题
-====================== */
-.hero-sub {
-  margin-top: 14px;
-  font-size: 14px;
+.tag {
+  opacity: 0.6;
   letter-spacing: 0.2em;
-  color: rgba(255,255,255,0.6);
-
-  animation: fadeUp 1.6s ease both;
 }
 
-/* ======================
-   卡片（卷轴感）
-====================== */
-.hero-card {
-  margin-top: 28px;
-  display: inline-block;
+.title {
+  font-size: 46px;
+  font-weight: 400;
+  margin: 10px 0 12px;
+  letter-spacing: 0.1em;
+}
 
-  padding: 10px 18px;
+.desc {
+  opacity: 0.7;
+  line-height: 1.8;
+  margin-bottom: 30px;
+}
+
+/* 按钮 */
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.actions button {
+  padding: 10px 16px;
   border-radius: 999px;
-
+  border: 1px solid rgba(255,255,255,0.15);
   background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  color: white;
+  cursor: pointer;
+}
 
-  backdrop-filter: blur(10px);
-
+/* 数据 */
+.stats {
+  display: flex;
+  gap: 20px;
+  opacity: 0.6;
   font-size: 12px;
-  color: rgba(255,255,255,0.7);
-
-  animation: fadeUp 2s ease both;
 }
 
-/* ======================
-   入场动画（核心升级）
-====================== */
-@keyframes heroEnter {
-  from {
-    opacity: 0;
-    transform: scale(1.03);
-    filter: blur(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-    filter: blur(0);
-  }
+/* 右侧图片（重点修正丑点） */
+.hero-image {
+  display: flex;
+  justify-content: center;
 }
 
-/* 标题展开（更像卷轴） */
-@keyframes titleReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(1.05);
-    filter: blur(14px);
-    letter-spacing: 0.3em;
-  }
+.hero-image img {
+  width: 320px;
+  height: 420px;
+  object-fit: cover;
+  border-radius: 20px;
 
-  60% {
-    opacity: 1;
-    transform: translateY(-6px) scale(1.01);
-    filter: blur(2px);
-  }
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-    letter-spacing: 0.12em;
-  }
+  transform: translateY(0);
+  animation: float 4s ease-in-out infinite;
 }
 
-/* 普通淡入 */
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* 漂浮呼吸 */
-@keyframes contentFloat {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 .stat-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-size: 13px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
 .stat-pill:hover { border-color: var(--brand); transform: translateY(-2px); color: var(--text); }
