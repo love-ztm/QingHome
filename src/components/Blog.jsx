@@ -14,7 +14,7 @@ export default function Blog() {
       subtitle="风雨里走过的路与慢慢明白的事"
       icon="fa-solid fa-feather"
       action={
-        <a className="section__link" href="https://blog.notett.com" target="_blank" rel="noreferrer">
+        <a className="section__link" href="https://blog.us.ci" target="_blank" rel="noreferrer">
           轻叩此门，入字里行间 <IconExternal size={14} />
         </a>
       }
