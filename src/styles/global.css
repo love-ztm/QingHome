@@ -168,9 +168,27 @@ img { max-width: 100%; display: block; }
 .hero__blob--1 { width: 480px; height: 480px; background: var(--hero-blob-1, rgba(129,140,248,0.22)); top: -120px; left: -80px; }
 .hero__blob--2 { width: 420px; height: 420px; background: var(--hero-blob-2, rgba(34,211,238,0.18)); bottom: -100px; right: -60px; animation-delay: -6s; }
 .hero__grid { position: absolute; inset: 0; background-image: linear-gradient(var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
-.hero__inner { position: relative; z-index: 1; max-width: 720px; }
-.hero__avatar { position: relative; width: 120px; height: 120px; margin: 0 auto 28px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; box-shadow: var(--shadow-lg); border: 4px solid var(--bg); }
-.hero__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.hero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  gap: 80px;
+}
+.hero__avatar {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 0 8px rgba(255,255,255,0.8),
+    0 30px 80px rgba(0,0,0,0.15);
+}.hero__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .hero__status { position: absolute; bottom: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--bg); z-index: 2; }
 .hero__status--available { background: var(--success); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); animation: pulse 2s infinite; }
 .hero__status--busy { background: var(--warn); }
@@ -183,7 +201,9 @@ img { max-width: 100%; display: block; }
 .hero__bio { color: var(--text-dim); max-width: 540px; margin: 0 auto 32px; font-size: 15px; }
 .hero__cta { display: flex; gap: 14px; justify-content: center; margin-bottom: 48px; flex-wrap: wrap; }
 .hero__stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
-
+.hero__content {
+  flex: 1;
+}
 .stat-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-size: 13px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
 .stat-pill:hover { border-color: var(--brand); transform: translateY(-2px); color: var(--text); }
 .stat-pill__value { color: var(--text); font-weight: 700; }
@@ -287,7 +307,6 @@ img { max-width: 100%; display: block; }
    🏮 国风背景增强（在原系统上叠加，不破坏结构）
    ============================================================ */
 
-/* ===== 山水水墨底图层 ===== */
 body::before {
   content: "";
   position: fixed;
@@ -295,21 +314,17 @@ body::before {
   z-index: -2;
 
   background:
-    radial-gradient(circle at 20% 20%, rgba(99,102,241,0.10), transparent 45%),
-    radial-gradient(circle at 80% 40%, rgba(34,211,238,0.10), transparent 50%),
-    radial-gradient(circle at 50% 100%, rgba(0,0,0,0.06), transparent 60%),
-
-    url("https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=2000&q=80");
+    url("https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=2000&q=80"),
+    radial-gradient(circle at 20% 30%, rgba(99,102,241,0.10), transparent 55%),
+    radial-gradient(circle at 80% 60%, rgba(34,211,238,0.08), transparent 60%);
 
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 
-  filter: blur(0px) contrast(1.05) saturate(0.9);
-  opacity: 0.18;
+  filter: contrast(1.05) saturate(0.85);
+  opacity: 0.22;
 }
-
-/* ===== 水墨浮层（增强国风氛围） ===== */
 body::after {
   content: "";
   position: fixed;
@@ -318,13 +333,12 @@ body::after {
 
   background:
     radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), transparent 60%),
-    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.6), transparent 55%);
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,0.5), transparent 55%);
 
   mix-blend-mode: screen;
-  opacity: 0.6;
+  opacity: 0.55;
   pointer-events: none;
 }
-
 /* ===== Hero 国风光晕升级 ===== */
 .hero__bg::before {
   content: "";
@@ -445,4 +459,13 @@ body::after {
   0%   { margin-left: 0px; }
   50%  { margin-left: 20px; }
   100% { margin-left: 0px; }
+}
+.card, .blog__item, .stat-pill {
+  background: rgba(255, 253, 248, 0.72);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+[data-theme='dark'] .card,
+[data-theme='dark'] .blog__item {
+  background: rgba(18, 20, 24, 0.65);
 }
