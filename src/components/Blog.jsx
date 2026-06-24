@@ -10,12 +10,12 @@ export default function Blog() {
     <Section
       id="blog"
       eyebrow="Blog"
-      title="博客文章"
-      subtitle="把踩过的坑、想清楚的道理写下来"
+      title="浮生笔录"
+      subtitle="风雨里走过的路与慢慢明白的事"
       icon="fa-solid fa-feather"
       action={
         <a className="section__link" href="https://blog.notett.com" target="_blank" rel="noreferrer">
-          访问我的博客 <IconExternal size={14} />
+          轻叩此门，入字里行间 <IconExternal size={14} />
         </a>
       }
     >
@@ -31,7 +31,7 @@ export default function Blog() {
             <h3 className="blog__title">{post.title}</h3>
             <p className="blog__excerpt">{post.excerpt}</p>
             <span className="blog__more">
-              阅读全文 <IconArrow size={14} />
+              观其全篇 <IconArrow size={14} />
             </span>
           </a>
         ))}
