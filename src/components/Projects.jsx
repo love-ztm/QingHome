@@ -51,9 +51,9 @@ export default function Projects() {
   };
 
   return (
-    <Section id="projects" eyebrow="Open Source" title="开源项目" subtitle="一些被社区使用与认可的小工具" icon="fa-solid fa-code"
+    <Section id="projects" eyebrow="Open Source" title="推荐项目" subtitle="社区开源项目精选推荐" icon="fa-solid fa-code"
       action={
-        <a className="section__link" href="https://github.com/yutian81" target="_blank" rel="noreferrer">
+        <a className="section__link" href="https://github.com/love-ztm" target="_blank" rel="noreferrer">
           访问我的 Github <IconExternal size={14} />
         </a>
       }
