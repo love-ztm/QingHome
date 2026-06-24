@@ -140,174 +140,30 @@ img { max-width: 100%; display: block; }
 .header__menu-btn { display: none; }
 
 /* ============================================================
-   HERO · 国风升级融合版（已对齐设计系统）
+   HERO
    ============================================================ */
+.hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; overflow: hidden; }
+.hero__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.hero__blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.9; animation: float 12s ease-in-out infinite; }
+.hero__blob--1 { width: 480px; height: 480px; background: var(--hero-blob-1, rgba(129,140,248,0.22)); top: -120px; left: -80px; }
+.hero__blob--2 { width: 420px; height: 420px; background: var(--hero-blob-2, rgba(34,211,238,0.18)); bottom: -100px; right: -60px; animation-delay: -6s; }
+.hero__grid { position: absolute; inset: 0; background-image: linear-gradient(var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
+.hero__inner { position: relative; z-index: 1; max-width: 720px; }
+.hero__avatar { position: relative; width: 120px; height: 120px; margin: 0 auto 28px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; box-shadow: var(--shadow-lg); border: 4px solid var(--bg); }
+.hero__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.hero__status { position: absolute; bottom: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; border: 4px solid var(--bg); z-index: 2; }
+.hero__status--available { background: var(--success); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); animation: pulse 2s infinite; }
+.hero__status--busy { background: var(--warn); }
+.hero__status--offline { background: var(--text-dim); }
+.hero__hello { color: var(--text-soft); font-size: 15px; margin-bottom: 8px; }
+.hero__wave { display: inline-block; animation: wave 2.5s infinite; transform-origin: 70% 70%; }
+.hero__name { font-size: clamp(40px, 7vw, 64px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; background: linear-gradient(135deg, var(--text) 30%, var(--brand)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+.hero__title { font-size: clamp(18px, 2.4vw, 22px); color: var(--brand); font-weight: 600; margin-bottom: 14px; }
+.hero__tagline { font-size: 17px; color: var(--text-soft); margin-bottom: 8px; }
+.hero__bio { color: var(--text-dim); max-width: 540px; margin: 0 auto 32px; font-size: 15px; }
+.hero__cta { display: flex; gap: 14px; justify-content: center; margin-bottom: 48px; flex-wrap: wrap; }
+.hero__stats { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
 
-.hero {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-
-  background: var(--bg);
-}
-
-/* ===== 水墨背景 ===== */
-.hero-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 20% 25%, rgba(99,102,241,0.10), transparent 45%),
-    radial-gradient(circle at 80% 60%, rgba(34,211,238,0.08), transparent 50%),
-    radial-gradient(circle at center, rgba(255,255,255,0.03), transparent 60%);
-
-  opacity: 1;
-  filter: blur(0px);
-  transform: scale(1.1);
-  animation: inkBreath 8s ease-in-out infinite;
-}
-
-@keyframes inkBreath {
-  0%,100% { transform: scale(1.1); }
-  50% { transform: scale(1.15); }
-}
-
-/* ===== 主布局（作品级关键） ===== */
-.hero-wrap {
-  width: min(1120px, 92%);
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 80px;
-  align-items: center;
-
-  position: relative;
-  z-index: 2;
-}
-
-/* ===== 左侧文字 ===== */
-.hero-text {
-  color: var(--text);
-}
-
-.hero-text .tag {
-  font-size: 12px;
-  letter-spacing: 0.25em;
-  color: var(--text-dim);
-  margin-bottom: 12px;
-}
-
-.hero-text .title {
-  font-size: 52px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  color: var(--text);
-  margin-bottom: 14px;
-
-  animation: heroReveal 1.2s cubic-bezier(0.16,1,0.3,1) both;
-}
-
-.hero-text .desc {
-  font-size: 15px;
-  line-height: 1.9;
-  color: var(--text-soft);
-  margin-bottom: 28px;
-}
-
-/* ===== 按钮区 ===== */
-.actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.actions button {
-  padding: 10px 16px;
-  border-radius: 999px;
-
-  background: var(--surface);
-  border: 1px solid var(--border);
-
-  color: var(--text);
-  font-size: 13px;
-
-  transition: all 0.25s ease;
-}
-
-.actions button:hover {
-  transform: translateY(-2px);
-  border-color: var(--brand);
-  background: var(--surface-hover);
-  color: var(--brand);
-}
-
-/* ===== 数据 ===== */
-.stats {
-  display: flex;
-  gap: 18px;
-  font-size: 12px;
-  color: var(--text-dim);
-}
-
-/* ===== 右侧图片（重点优化） ===== */
-.hero-image {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero-image img {
-  width: 340px;
-  height: 460px;
-  object-fit: cover;
-  border-radius: 22px;
-
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
-
-  animation: float 5s ease-in-out infinite;
-  transition: transform 0.3s ease;
-}
-
-.hero-image img:hover {
-  transform: translateY(-6px) scale(1.02);
-}
-
-/* ===== 动画体系 ===== */
-@keyframes heroReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(40px);
-    filter: blur(10px);
-    letter-spacing: 0.2em;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-    letter-spacing: 0.08em;
-  }
-}
-
-@keyframes float {
-  0%,100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-/* ===== 响应式 ===== */
-@media (max-width: 900px) {
-  .hero-wrap {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    text-align: center;
-  }
-
-  .hero-image img {
-    width: 280px;
-    height: 380px;
-  }
-}
 .stat-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-size: 13px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
 .stat-pill:hover { border-color: var(--brand); transform: translateY(-2px); color: var(--text); }
 .stat-pill__value { color: var(--text); font-weight: 700; }
