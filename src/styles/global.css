@@ -139,9 +139,10 @@ img { max-width: 100%; display: block; }
 .header__actions { display: flex; align-items: center; gap: 8px; }
 .header__menu-btn { display: none; }
 
-/* ======================
-   HERO 总体
-====================== */
+/* ============================================================
+   HERO · 国风升级融合版（已对齐设计系统）
+   ============================================================ */
+
 .hero {
   position: relative;
   min-height: 100vh;
@@ -150,106 +151,162 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   overflow: hidden;
 
-  animation: heroEnter 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  background: var(--bg);
 }
 
-.hero {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: radial-gradient(circle at top, #151b25, #0b0f14);
-  overflow: hidden;
-}
-
-/* 背景层 */
+/* ===== 水墨背景 ===== */
 .hero-bg {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.06), transparent 40%),
-    radial-gradient(circle at 80% 60%, rgba(255,255,255,0.04), transparent 50%);
-  opacity: 0.8;
+    radial-gradient(circle at 20% 25%, rgba(99,102,241,0.10), transparent 45%),
+    radial-gradient(circle at 80% 60%, rgba(34,211,238,0.08), transparent 50%),
+    radial-gradient(circle at center, rgba(255,255,255,0.03), transparent 60%);
+
+  opacity: 1;
+  filter: blur(0px);
+  transform: scale(1.1);
+  animation: inkBreath 8s ease-in-out infinite;
 }
 
-/* 核心布局（关键优化） */
+@keyframes inkBreath {
+  0%,100% { transform: scale(1.1); }
+  50% { transform: scale(1.15); }
+}
+
+/* ===== 主布局（作品级关键） ===== */
 .hero-wrap {
-  width: min(1100px, 92%);
+  width: min(1120px, 92%);
   display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 60px;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 80px;
   align-items: center;
+
+  position: relative;
+  z-index: 2;
 }
 
-/* 左侧文字 */
+/* ===== 左侧文字 ===== */
 .hero-text {
-  color: white;
+  color: var(--text);
 }
 
-.tag {
-  opacity: 0.6;
-  letter-spacing: 0.2em;
+.hero-text .tag {
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
 }
 
-.title {
-  font-size: 46px;
-  font-weight: 400;
-  margin: 10px 0 12px;
-  letter-spacing: 0.1em;
+.hero-text .title {
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text);
+  margin-bottom: 14px;
+
+  animation: heroReveal 1.2s cubic-bezier(0.16,1,0.3,1) both;
 }
 
-.desc {
-  opacity: 0.7;
-  line-height: 1.8;
-  margin-bottom: 30px;
+.hero-text .desc {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-soft);
+  margin-bottom: 28px;
 }
 
-/* 按钮 */
+/* ===== 按钮区 ===== */
 .actions {
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .actions button {
   padding: 10px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.06);
-  color: white;
-  cursor: pointer;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+
+  color: var(--text);
+  font-size: 13px;
+
+  transition: all 0.25s ease;
 }
 
-/* 数据 */
+.actions button:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand);
+  background: var(--surface-hover);
+  color: var(--brand);
+}
+
+/* ===== 数据 ===== */
 .stats {
   display: flex;
-  gap: 20px;
-  opacity: 0.6;
+  gap: 18px;
   font-size: 12px;
+  color: var(--text-dim);
 }
 
-/* 右侧图片（重点修正丑点） */
+/* ===== 右侧图片（重点优化） ===== */
 .hero-image {
   display: flex;
   justify-content: center;
+  align-items: center;
 }
 
 .hero-image img {
-  width: 320px;
-  height: 420px;
+  width: 340px;
+  height: 460px;
   object-fit: cover;
-  border-radius: 20px;
+  border-radius: 22px;
 
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
 
-  transform: translateY(0);
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+
+.hero-image img:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+/* ===== 动画体系 ===== */
+@keyframes heroReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(40px);
+    filter: blur(10px);
+    letter-spacing: 0.2em;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+    letter-spacing: 0.08em;
+  }
 }
 
 @keyframes float {
   0%,100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 900px) {
+  .hero-wrap {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    text-align: center;
+  }
+
+  .hero-image img {
+    width: 280px;
+    height: 380px;
+  }
 }
 .stat-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; color: var(--text-soft); font-size: 13px; box-shadow: var(--shadow-sm); transition: all 0.2s ease; }
 .stat-pill:hover { border-color: var(--brand); transform: translateY(-2px); color: var(--text); }
