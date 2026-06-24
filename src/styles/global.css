@@ -1,79 +1,73 @@
 /* ============================================================
-   设计系统 · 全局样式 (QingHome2 — 水墨国风改版)
-   水墨山水国风 · 卡片式 · 明暗双主题
+   设计系统 · 全局样式 (QingHome 国风水墨改版)
+   宣纸水墨古风 · 卡片式 · 明暗双主题
+   适配仓库：https://github.com/yutian81/QingHome
    ============================================================ */
 
-/* ---------- 设计变量：亮色（国风水墨浅调） ---------- */
+/* ---------- 设计变量：亮色（宣纸浅水墨） ---------- */
 :root, [data-theme='light'] {
-  --bg: #fcfbf7;
-  --bg-soft: #f6f3ec;
+  --bg: #fcfaf4;
+  --bg-soft: #f5f0e6;
   --bg-elevated: #ffffff;
   --surface: #ffffff;
-  --surface-hover: #f2eee6;
+  --surface-hover: #efe9dd;
 
-  --border: #e2ddd3;
-  --border-strong: #c9c2b5;
+  --border: #e0d8cc;
+  --border-strong: #c8beb0;
 
-  --text: #1a1a1a;
-  --text-soft: #555555;
-  --text-dim: #888888;
+  --text: #181818;
+  --text-soft: #525252;
+  --text-dim: #868686;
 
-  /* 国风主色：黛紫+烟青，匹配页面紫色按钮 */
-  --brand: #6366f1;
-  --brand-2: #8b5cf6;
-  --brand-soft: rgba(99, 102, 241, 0.08);
-  --accent: #3b7c92; /* 山水青墨色 */
-  --success: #6a994e;
-  --warn: #c48b46;
+  /* 国风渐变主色 黛紫 */
+  --brand: #7c6ed8;
+  --brand-2: #9d7fe0;
+  --brand-soft: rgba(124, 110, 216, 0.09);
+  --accent: #487c91; /* 山水青墨 */
+  --success: #68944b;
+  --warn: #c28642;
 
-  --shadow-sm: 0 1px 2px rgba(30, 30, 30, 0.05), 0 1px 3px rgba(30, 30, 30, 0.06);
-  --shadow-md: 0 4px 12px rgba(30, 30, 30, 0.07), 0 2px 6px rgba(30, 30, 30, 0.04);
-  --shadow-lg: 0 12px 32px rgba(30, 30, 30, 0.09), 0 4px 12px rgba(30, 30, 30, 0.05);
-  --shadow-brand: 0 8px 24px rgba(99, 102, 241, 0.2);
+  --shadow-sm: 0 1px 2px rgba(20, 20, 20, 0.04), 0 1px 3px rgba(20, 20, 20, 0.05);
+  --shadow-md: 0 4px 12px rgba(20, 20, 20, 0.06), 0 2px 6px rgba(20, 20, 20, 0.03);
+  --shadow-lg: 0 12px 32px rgba(20, 20, 20, 0.08), 0 4px 12px rgba(20, 20, 20, 0.04);
+  --shadow-brand: 0 8px 24px rgba(124, 110, 216, 0.22);
 
-  /* 国风专属变量 */
-  --ink-gray: #444444;
-  --paper: #fcfbf7;
-  --red-seal: #c83e3e;
-  --hero-blob-1: rgba(139, 92, 246, 0.15);
-  --hero-blob-2: rgba(59, 124, 146, 0.12);
-  --grid-line: rgba(80, 80, 80, 0.03);
+  /* 水墨背景渐变球 */
+  --hero-blob-1: rgba(157, 127, 224, 0.14);
+  --hero-blob-2: rgba(72, 124, 145, 0.11);
+  --grid-line: rgba(90, 80, 65, 0.03);
 }
 
-/* ---------- 设计变量：暗色（水墨深调） ---------- */
+/* ---------- 设计变量：暗色（深墨古风） ---------- */
 [data-theme='dark'] {
-  --bg: #0f1114;
-  --bg-soft: #171a1f;
-  --bg-elevated: #1d2129;
-  --surface: #1c2028;
-  --surface-hover: #272c38;
+  --bg: #0d0f13;
+  --bg-soft: #15181d;
+  --bg-elevated: #1a1e26;
+  --surface: #191d24;
+  --surface-hover: #242934;
 
-  --border: #30353f;
-  --border-strong: #3e4450;
+  --border: #2c313d;
+  --border-strong: #3a404e;
 
-  --text: #e9e9e9;
-  --text-soft: #a8a8a8;
-  --text-dim: #707070;
+  --text: #e8e8e8;
+  --text-soft: #a2a2a2;
+  --text-dim: #6c6c6c;
 
-  --brand: #818cf8;
-  --brand-2: #a78bfa;
-  --brand-soft: rgba(129, 140, 248, 0.12);
-  --accent: #58a3bc;
-  --success: #7cb342;
-  --warn: #d49a54;
+  --brand: #8b96f0;
+  --brand-2: #b098eb;
+  --brand-soft: rgba(139, 150, 240, 0.13);
+  --accent: #5aa3bc;
+  --success: #77b84f;
+  --warn: #d49750;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
-  --shadow-brand: 0 8px 24px rgba(129, 140, 248, 0.22);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.38);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.48);
+  --shadow-brand: 0 8px 24px rgba(139, 150, 240, 0.23);
 
-  /* 暗色国风变量 */
-  --ink-gray: #bbbbbb;
-  --paper: #0f1114;
-  --red-seal: #e05050;
-  --hero-blob-1: rgba(139, 92, 246, 0.12);
-  --hero-blob-2: rgba(59, 124, 146, 0.1);
-  --grid-line: rgba(255, 255, 255, 0.025);
+  --hero-blob-1: rgba(157, 127, 224, 0.10);
+  --hero-blob-2: rgba(72, 124, 145, 0.09);
+  --grid-line: rgba(255, 255, 255, 0.022);
 }
 
 /* ---------- Reset 全局基础 ---------- */
@@ -82,7 +76,7 @@
 html { scroll-behavior: smooth; scroll-padding-top: 96px; -webkit-text-size-adjust: 100%; }
 
 body {
-  /* 替换字体：增加国风宋体，优先中文书法感 */
+  /* 增加思源宋体实现古风书法文字，不破坏原有无衬线阅读 */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
     'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Serif SC', SimSun, Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
@@ -93,8 +87,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   transition: background 0.4s ease, color 0.4s ease;
   overflow-x: hidden;
-  /* 全局水墨宣纸质感底色 */
-  background-image: radial-gradient(circle at 50% 0, transparent 60%, rgba(120,110,90,0.02) 100%);
+  /* 全局宣纸杂色肌理 */
+  background-image: radial-gradient(circle at 50% 0, transparent 60%, rgba(130,115,95,0.02) 100%);
   background-attachment: fixed;
 }
 
@@ -104,10 +98,11 @@ img { max-width: 100%; display: block; }
 
 ::selection { background: var(--brand-soft); color: var(--brand); }
 
+/* 滚动条水墨适配 */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 6px; border: 2px solid var(--bg); }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-gray); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-soft); }
 
 /* ---------- Loading ---------- */
 .loading-spinner {
@@ -121,22 +116,22 @@ img { max-width: 100%; display: block; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================================
-   SECTION（通用区块）
+   SECTION 通用区块
    ============================================================ */
 .section { padding: 48px 24px; position: relative; }
 .section__inner { max-width: 1120px; margin: 0 auto; }
 .section__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 48px; }
 .section__eyebrow { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand); margin-bottom: 10px; }
-.section__title { font-size: 32px; font-weight: 700; letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px; }
-.section__subtitle { color: var(--text-soft); margin-top: 8px; font-size: 15px; }
+.section__title { font-size: 32px; font-weight: 700; letter-spacing: 0.03em; display: flex; align-items: center; gap: 10px; }
+.section__subtitle { color: var(--text-soft); margin-top: 8px; font-size: 15px; line-height: 1.7; }
 .section__link { display: inline-flex; align-items: center; gap: 6px; color: var(--brand); font-size: 14px; font-weight: 500; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; transition: all 0.2s ease; white-space: nowrap; }
 .section__link:hover { background: var(--brand-soft); border-color: var(--brand); }
 .section__action { flex-shrink: 0; }
 
 /* ============================================================
-   BUTTONS 按钮国风微调
+   BUTTONS 按钮柔和国风圆角
    ============================================================ */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 12px; /* 圆角加大更柔和水墨感 */ font-size: 14px; font-weight: 600; transition: all 0.2s ease; cursor: pointer; white-space: nowrap; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 12px; font-size: 14px; font-weight: 600; transition: all 0.2s ease; cursor: pointer; white-space: nowrap; }
 .btn--primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: var(--shadow-brand); }
 .btn--primary:hover { transform: translateY(-2px); filter: brightness(1.08); }
 .btn--ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
@@ -153,7 +148,7 @@ img { max-width: 100%; display: block; }
 .header__inner { max-width: 1120px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .header__brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
 .header__logo { width: 32px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; box-shadow: var(--shadow-brand); }
-.header__name { letter-spacing: -0.01em; }
+.header__name { letter-spacing: 0.02em; }
 .header__nav { display: flex; align-items: center; gap: 4px; }
 .header__link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; color: var(--text-soft); font-size: 14px; font-weight: 500; transition: all 0.2s ease; }
 .header__link:hover { color: var(--text); background: var(--surface-hover); }
@@ -161,29 +156,34 @@ img { max-width: 100%; display: block; }
 .header__menu-btn { display: none; }
 
 /* ============================================================
-   HERO 首屏核心（重点改造：水墨背景层）
+   HERO 首屏（核心水墨国风改造）
    ============================================================ */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; overflow: hidden; }
 .hero__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-/* 水墨渐变光晕 */
+/* 水墨光晕渐变球 */
 .hero__blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.9; animation: float 12s ease-in-out infinite; }
-.hero__blob--1 { width: 480px; height: 480px; background: var(--hero-blob-1, rgba(139, 92, 246, 0.15)); top: -120px; left: -80px; }
-.hero__blob--2 { width: 420px; height: 420px; background: var(--hero-blob-2, rgba(59, 124, 146, 0.12)); bottom: -100px; right: -60px; animation-delay: -6s; }
+.hero__blob--1 { width: 480px; height: 480px; background: var(--hero-blob-1); top: -120px; left: -80px; }
+.hero__blob--2 { width: 420px; height: 420px; background: var(--hero-blob-2); bottom: -100px; right: -60px; animation-delay: -6s; }
 .hero__grid { position: absolute; inset: 0; background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
 
-/* 新增：水墨山水背景图层（对应页面底图） */
-.hero__ink-bg {
+/* 水墨山水底图层（无需改HTML，CSS伪元素实现，零侵入） */
+.hero__bg::after {
+  content: "";
   position: absolute;
   inset: 0;
-  background-image: url('你的水墨山水图地址');
+  background-image: url("https://cdn.jsdelivr.net/gh/yutian81/cdn/ink-mountain-light.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.35;
+  opacity: 0.32;
   mix-blend-mode: soft-light;
   pointer-events: none;
+  transition: opacity 0.3s ease;
 }
-[data-theme="dark"] .hero__ink-bg { opacity: 0.18; }
+[data-theme="dark"] .hero__bg::after {
+  background-image: url("https://cdn.jsdelivr.net/gh/yutian81/cdn/ink-mountain-dark.png");
+  opacity: 0.16;
+}
 
 .hero__inner { position: relative; z-index: 1; max-width: 720px; }
 .hero__avatar { position: relative; width: 120px; height: 120px; margin: 0 auto 28px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; box-shadow: var(--shadow-lg); border: 4px solid var(--bg); }
@@ -194,9 +194,9 @@ img { max-width: 100%; display: block; }
 .hero__status--offline { background: var(--text-dim); }
 .hero__hello { color: var(--text-soft); font-size: 15px; margin-bottom: 8px; }
 .hero__wave { display: inline-block; animation: wave 2.5s infinite; transform-origin: 70% 70%; }
-/* 主标题国风渐变，匹配页面「洛璃·清梦栖山」文字效果 */
-.hero__name { font-size: clamp(40px, 7vw, 64px); font-weight: 800; letter-spacing: 0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--ink-gray) 30%, var(--brand)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
-.hero__title { font-size: clamp(18px, 2.4vw, 22px); color: var(--brand); font-weight: 600; margin-bottom: 14px; letter-spacing: 0.08em; }
+/* 古风标题渐变，增加字间距更雅致 */
+.hero__name { font-size: clamp(40px, 7vw, 64px); font-weight: 800; letter-spacing: 0.04em; line-height: 1.1; background: linear-gradient(135deg, var(--text) 30%, var(--brand)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 10px; }
+.hero__title { font-size: clamp(18px, 2.4vw, 22px); color: var(--brand); font-weight: 600; margin-bottom: 14px; letter-spacing: 0.09em; }
 .hero__tagline { font-size: 17px; color: var(--text-soft); margin-bottom: 8px; }
 .hero__bio { color: var(--text-dim); max-width: 540px; margin: 0 auto 32px; font-size: 15px; line-height: 1.7; }
 .hero__cta { display: flex; gap: 14px; justify-content: center; margin-bottom: 48px; flex-wrap: wrap; }
@@ -208,13 +208,13 @@ img { max-width: 100%; display: block; }
 .stat-pill__label { color: var(--text-dim); }
 
 /* ============================================================
-   CARDS 卡片国风柔和化
+   CARDS 卡片国风圆润化
    ============================================================ */
 .cards { display: grid; gap: 20px; }
 .cards--projects { grid-template-columns: repeat(3, 1fr); }
 .cards--resources { grid-template-columns: repeat(3, 1fr); }
 
-.card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; /* 更大圆角适配国风柔和感 */ padding: 24px; box-shadow: var(--shadow-sm); transition: all 0.25s ease; overflow: hidden; display: flex; flex-direction: column; }
+.card { position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow-sm); transition: all 0.25s ease; overflow: hidden; display: flex; flex-direction: column; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--brand)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
 .card:hover { border-color: var(--brand); box-shadow: var(--shadow-lg); transform: translateY(-4px); }
 .card:hover::before { transform: scaleX(1); }
@@ -225,7 +225,7 @@ img { max-width: 100%; display: block; }
 .card__repo-icon { width: 42px; height: 42px; border-radius: 10px; background: var(--bg-soft); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--brand); }
 .card__stars { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; color: var(--warn); }
 .card__name { font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.01em; }
-.card__desc { color: var(--text-soft); font-size: 14px; flex: 1; margin-bottom: 16px; line-height: 1.6; }
+.card__desc { color: var(--text-soft); font-size: 14px; flex: 1; margin-bottom: 16px; line-height: 1.65; }
 .card__foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .lang { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-soft); }
 .lang__dot { width: 10px; height: 10px; border-radius: 50%; }
@@ -237,8 +237,8 @@ img { max-width: 100%; display: block; }
 .card__icon { width: 48px; height: 48px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .card__body { flex: 1; }
 .card__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.card__title { font-size: 16px; font-weight: 700; }
-.card__cat { font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(59, 124, 146, 0.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.card__title { font-size: 16px; font-weight: 700; letter-spacing: 0.01em; }
+.card__cat { font-size: 11px; font-weight: 600; color: var(--accent); background: rgba(72, 124, 145, 0.1); padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
 .card__go { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: var(--brand); margin-top: 8px; transition: gap 0.2s ease; }
 .card:hover .card__go { gap: 8px; }
 
@@ -252,35 +252,22 @@ img { max-width: 100%; display: block; }
 .blog__tag { color: var(--brand); font-weight: 600; background: var(--brand-soft); padding: 2px 10px; border-radius: 6px; }
 .blog__date { color: var(--text-dim); font-size: 12px; white-space: nowrap; }
 .blog__title { font-size: 19px; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.01em; line-height: 1.4; }
-.blog__excerpt { color: var(--text-soft); font-size: 14px; margin-bottom: 14px; line-height: 1.6; }
+.blog__excerpt { color: var(--text-soft); font-size: 14px; margin-bottom: 14px; line-height: 1.65; }
 .blog__more { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--brand); transition: gap 0.2s ease; }
 .blog__item:hover .blog__more { gap: 8px; }
 
 /* ============================================================
-   底部CTA区块（页面底部小船文字区域）
+   底部CTA区块
    ============================================================ */
-.cta-box { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 32px; background: linear-gradient(135deg, var(--brand-soft), transparent); border: 1px solid var(--border); border-radius: 20px; flex-wrap: wrap;
-  /* 可选：底部加淡水墨底图 */
-  background-image: linear-gradient(135deg, var(--brand-soft), transparent), url('底部水墨边角图');
-  background-position: left bottom;
-  background-repeat: no-repeat;
-  background-size: 180px auto;
-}
+.cta-box { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 32px; background: linear-gradient(135deg, var(--brand-soft), transparent); border: 1px solid var(--border); border-radius: 20px; flex-wrap: wrap; }
 .cta-box__title { font-size: 20px; font-weight: 700; margin-bottom: 4px; letter-spacing: 0.03em; }
 .cta-box__text { color: var(--text-soft); font-size: 14px; line-height: 1.7; }
 
 /* ============================================================
    FOOTER 页脚
    ============================================================ */
-.footer { border-top: 1px solid var(--border); padding: 32px 24px; background: var(--bg-soft);
-  /* 页脚全局淡山水底纹 */
-  background-image: url('底部淡墨山水图');
-  background-position: bottom;
-  background-repeat: no-repeat;
-  background-size: 100% auto;
-  background-blend-mode: soft-light;
-}
-.footer__inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; position: relative; z-index: 2; }
+.footer { border-top: 1px solid var(--border); padding: 32px 24px; background: var(--bg-soft); }
+.footer__inner { max-width: 1120px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
 .footer__brand { display: flex; align-items: center; gap: 10px; font-weight: 700; }
 .footer__logo { width: 28px; height: 28px; border-radius: 7px; background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
 .footer__text { color: var(--text-dim); font-size: 13px; letter-spacing: 0.02em; }
@@ -296,7 +283,7 @@ img { max-width: 100%; display: block; }
 @keyframes wave { 0%, 60%, 100% { transform: rotate(0deg); } 10% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 30% { transform: rotate(14deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } }
 
 /* ============================================================
-   响应式适配
+   响应式（完全兼容原仓库布局逻辑）
    ============================================================ */
 @media (max-width: 960px) {
   .cards--projects { grid-template-columns: repeat(2, 1fr); }
