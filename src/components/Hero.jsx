@@ -42,7 +42,7 @@ export default function Hero() {
             className="btn btn--primary"
             onClick={() => document.getElementById('blog')?.scrollIntoView({ behavior: 'smooth' })}
           >
-            精选文章 <IconArrow size={16} />
+            风雅录 <IconArrow size={16} />
           </button>
           <button
             className="btn btn--primary"
@@ -51,7 +51,7 @@ export default function Hero() {
             Github <IconArrow size={16} />
           </button>
           <a className="btn btn--ghost" href={`mailto:${p.email}`}>
-            <IconMail size={16} /> 联系我
+            <IconMail size={16} /> 书信往来
           </a>
         </div>
 
