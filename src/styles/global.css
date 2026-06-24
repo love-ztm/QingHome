@@ -143,11 +143,67 @@ img { max-width: 100%; display: block; }
    HERO
    ============================================================ */
 .hero { position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 120px 24px 80px; overflow: hidden; }
-.hero__bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.hero__blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.9; animation: float 12s ease-in-out infinite; }
-.hero__blob--1 { width: 480px; height: 480px; background: var(--hero-blob-1, rgba(129,140,248,0.22)); top: -120px; left: -80px; }
-.hero__blob--2 { width: 420px; height: 420px; background: var(--hero-blob-2, rgba(34,211,238,0.18)); bottom: -100px; right: -60px; animation-delay: -6s; }
-.hero__grid { position: absolute; inset: 0; background-image: linear-gradient(var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line, rgba(255,255,255,0.035)) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%); }
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* 🌫 宣纸底 + 水墨氛围 */
+  background:
+    radial-gradient(circle at 20% 20%, rgba(0,0,0,0.06), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(120,80,40,0.05), transparent 65%),
+    url('/bg/paper-texture.png');
+
+  background-size: cover;
+  opacity: 0.9;
+}
+.hero__blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.35;
+  animation: inkFloat 16s ease-in-out infinite;
+}
+
+.hero__blob--1 {
+  width: 520px;
+  height: 520px;
+  background: rgba(0,0,0,0.08);
+  top: -120px;
+  left: -100px;
+}
+
+.hero__blob--2 {
+  width: 460px;
+  height: 460px;
+  background: rgba(90,60,30,0.10);
+  bottom: -120px;
+  right: -80px;
+  animation-delay: -6s;
+}
+
+@keyframes inkFloat {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  50% { transform: translate(40px,-30px) scale(1.08); }
+}
+.hero__grid {
+  display: none;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at center,
+    rgba(255,255,255,0.25),
+    rgba(0,0,0,0.05)
+  );
+  pointer-events: none;
+}
+.hero {
+  background-blend-mode: multiply;
+}
 .hero__inner { position: relative; z-index: 1; max-width: 720px; }
 .hero__avatar { position: relative; width: 120px; height: 120px; margin: 0 auto 28px; border-radius: 50%; background: linear-gradient(135deg, var(--brand), var(--brand-2)); display: flex; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; color: #fff; box-shadow: var(--shadow-lg); border: 4px solid var(--bg); }
 .hero__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
